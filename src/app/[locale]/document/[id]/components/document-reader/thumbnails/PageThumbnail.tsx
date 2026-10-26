@@ -42,6 +42,8 @@ export const PageThumbnail: React.FC<PageThumbnailProps> = ({ pdf, pageNumber, i
         style={{ width: THUMBNAIL_WIDTH }}
       >
         {src ? (
+          // A data URL drawn in the browser from the loaded PDF; next/image has nothing to optimize.
+          // eslint-disable-next-line @next/next/no-img-element
           <img src={src} alt="" className="block h-auto w-full animate-in fade-in duration-200" />
         ) : (
           <span className="block aspect-[1/1.414] w-full" />

@@ -33,7 +33,6 @@ export const useDocumentLanguages = (
     if (lastSelectionLengthRef.current < MIN_SELECTION_LENGTH_FOR_LOCK) return;
     const detected = quickTranslate.detectedSourceLanguage?.toLowerCase();
     if (detected && isSupportedLanguage(detected)) setLockedDocumentLanguage(detected);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [quickTranslate.detectedSourceLanguage]);
 
   const isDocumentLocked = lockedDocumentLanguage !== null;

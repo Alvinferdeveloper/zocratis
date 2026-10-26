@@ -9,7 +9,6 @@ export const useStoredChoice = <T extends string>(key: string, options: readonly
     const stored = readStoredPreference(key);
     setValue(options.includes(stored as T) ? (stored as T) : fallback);
     // The options are a constant list; re-reading only when the key changes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, fallback]);
 
   const choose = useCallback(

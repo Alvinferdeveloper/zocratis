@@ -148,7 +148,6 @@ export const DocumentReader: React.FC<DocumentReaderProps> = ({ document, reques
             quickTranslate.clear();
         }
         // Only the selected text / target should re-trigger a translation.
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [selectedText, lang.target]);
 
     const [isChatOpen, setIsChatOpen] = useState(false);

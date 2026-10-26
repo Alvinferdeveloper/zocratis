@@ -47,7 +47,6 @@ export const TranslationLoader: React.FC<TranslationLoaderProps> = ({
     return () => clearInterval(timer);
     // The real pair is fixed for the lifetime of this loader (a card is scoped to one word);
     // `pairs` intentionally isn't a dependency so the interval doesn't reset every render.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const [left, right] = pairs[pairIndex];
