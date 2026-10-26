@@ -8,6 +8,22 @@
   "localeSwitcher": {
     "label": "Idioma"
   },
+  "statusPage": {
+    "backHome": "Volver al inicio",
+    "notFound": {
+      "eyebrow": "Página no encontrada",
+      "title": "Esta página no está en la biblioteca.",
+      "description": "Puede que el enlace esté mal escrito o que lo que buscabas se haya movido. ¿Volvemos a un lugar conocido?",
+      "back": "Página anterior"
+    },
+    "unexpected": {
+      "eyebrow": "Algo salió mal",
+      "title": "Se nos ha corrido la tinta.",
+      "description": "Ocurrió un error inesperado al cargar esta página. Tus documentos y notas están a salvo; puedes intentarlo de nuevo.",
+      "retry": "Reintentar",
+      "reference": "Ref. {digest}"
+    }
+  },
   "theme": {
     "label": "Tema",
     "light": "Claro",

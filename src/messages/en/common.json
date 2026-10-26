@@ -8,6 +8,22 @@
   "localeSwitcher": {
     "label": "Language"
   },
+  "statusPage": {
+    "backHome": "Back to home",
+    "notFound": {
+      "eyebrow": "Page not found",
+      "title": "This page isn't in the library.",
+      "description": "The link may be mistyped, or what you were looking for has moved. Shall we head back somewhere familiar?",
+      "back": "Previous page"
+    },
+    "unexpected": {
+      "eyebrow": "Something went wrong",
+      "title": "The ink has smudged.",
+      "description": "An unexpected error occurred while loading this page. Your documents and notes are safe; you can try again.",
+      "retry": "Try again",
+      "reference": "Ref. {digest}"
+    }
+  },
   "theme": {
     "label": "Theme",
     "light": "Light",
