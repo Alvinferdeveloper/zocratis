@@ -19,6 +19,8 @@ interface AssistantMessageProps {
   sources: ChatSource[];
   markState: AssistantMarkState;
   showSuggestions: boolean;
+  // Rendered under the reply; the article is a `group`, so actions can reveal on hover.
+  actions?: React.ReactNode;
   onSuggestionSelect: (suggestion: string) => void;
   onSourceSelect: (source: ChatSource) => void;
 }
@@ -28,6 +30,7 @@ export const AssistantMessage: React.FC<AssistantMessageProps> = ({
   sources,
   markState,
   showSuggestions,
+  actions,
   onSuggestionSelect,
   onSourceSelect,
 }) => {
@@ -50,7 +53,7 @@ export const AssistantMessage: React.FC<AssistantMessageProps> = ({
   }, [sources, onSourceSelect]);
 
   return (
-    <article className="min-w-0">
+    <article className="group min-w-0">
       <MarkdownRenderer
         content={linkCitations(content, sources.length)}
         components={citationComponents}
@@ -59,6 +62,7 @@ export const AssistantMessage: React.FC<AssistantMessageProps> = ({
       {markState !== "hidden" && (
         <ZocratisMark animated={markState === "working"} className="mt-3 size-6 text-primary" />
       )}
+      {actions && <div className="mt-2 flex items-center gap-1">{actions}</div>}
       {showSuggestions && suggestions.length > 0 && (
         <PromptList
           label={t("suggestionsLabel")}

@@ -25,7 +25,10 @@
   },
   "assistantMessage": {
     "suggestionsLabel": "Suggested questions",
-    "sourceLabel": "Source {number}, page {page}"
+    "sourceLabel": "Source {number}, page {page}",
+    "saveAsNote": "Save as note",
+    "savingNote": "Saving…",
+    "noteSaved": "Saved · View note"
   },
   "status": {
     "thinking": "Zocratis is thinking",

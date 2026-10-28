@@ -85,6 +85,9 @@ export interface BoundingRect {
     pageNumber: number;
 }
 
+// A highlighted passage, or a chat reply saved against a page (no boundingRect, empty rects).
+export type AnnotationOrigin = 'selection' | 'chat';
+
 export interface Annotation {
     id: string;
     selectedText: string;
@@ -92,7 +95,8 @@ export interface Annotation {
     aiResponse: string | null;
     color: string;
     pageNumber: number;
-    boundingRect: BoundingRect;
+    origin: AnnotationOrigin;
+    boundingRect: BoundingRect | null;
     rects: AnnotationRect[];
     embedding: string | null;
     documentId: string;

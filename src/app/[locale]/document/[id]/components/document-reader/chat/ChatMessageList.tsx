@@ -1,10 +1,14 @@
 import { useEffect } from "react";
 import type { ChatStatus } from "ai";
-import type { ChatSource } from "@/app/types";
+import type { Annotation, ChatSource } from "@/app/types";
+import { cn } from "@/lib/utils";
+import type { UseChatNotesReturn } from "@/app/[locale]/document/[id]/hooks/useChatNotes";
+import { getChatReply } from "@/app/[locale]/document/[id]/lib/chat-note";
 import { useStickToBottom } from "@/app/[locale]/document/[id]/hooks/useStickToBottom";
 import { type ChatUIMessage, getMessageText } from "@/app/[locale]/document/[id]/lib/chat-message";
 import { AssistantMessage, AssistantMarkState } from "./AssistantMessage";
 import { UserMessage } from "./UserMessage";
+import { SaveNoteButton } from "./SaveNoteButton";
 import type { ApiErrorKey } from "@/lib/api-errors";
 import { ChatError, MessagesSkeleton, PendingReply } from "./ChatStatus";
 
@@ -19,6 +23,8 @@ interface ChatMessageListProps {
   onRetry: () => void;
   onSuggestionSelect: (suggestion: string) => void;
   onSourceSelect: (source: ChatSource) => void;
+  chatNotes: UseChatNotesReturn;
+  onNoteOpen: (note: Annotation) => void;
 }
 
 export const ChatMessageList: React.FC<ChatMessageListProps> = ({
@@ -30,6 +36,8 @@ export const ChatMessageList: React.FC<ChatMessageListProps> = ({
   onRetry,
   onSuggestionSelect,
   onSourceSelect,
+  chatNotes,
+  onNoteOpen,
 }) => {
   const { scrollRef, contentRef, scrollToBottom } = useStickToBottom();
   const lastMessage = messages.at(-1);
@@ -44,6 +52,31 @@ export const ChatMessageList: React.FC<ChatMessageListProps> = ({
   const getMarkState = (index: number): AssistantMarkState => {
     if (index !== messages.length - 1) return "hidden";
     return status === "streaming" ? "working" : "idle";
+  };
+
+  // Older replies show the action on hover or focus; the latest one, once it has finished, always.
+  const renderNoteAction = (index: number) => {
+    const isLatest = index === messages.length - 1;
+    if (isLatest && status !== "ready") return null;
+
+    const messageId = messages[index].id;
+    const savedNote = chatNotes.savedNotes[messageId];
+    return (
+      <div
+        className={cn(
+          !isLatest &&
+            !savedNote &&
+            "opacity-0 transition-opacity duration-150 group-hover:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100"
+        )}
+      >
+        <SaveNoteButton
+          isSaving={chatNotes.savingMessageId === messageId}
+          isSaved={Boolean(savedNote)}
+          onSave={() => chatNotes.save(getChatReply(messages, index))}
+          onOpen={() => savedNote && onNoteOpen(savedNote)}
+        />
+      </div>
+    );
   };
 
   const renderMessages = () => {
@@ -61,6 +94,7 @@ export const ChatMessageList: React.FC<ChatMessageListProps> = ({
           sources={message.metadata?.sources ?? NO_SOURCES}
           markState={getMarkState(index)}
           showSuggestions={index === messages.length - 1 && status === "ready"}
+          actions={renderNoteAction(index)}
           onSuggestionSelect={onSuggestionSelect}
           onSourceSelect={onSourceSelect}
         />

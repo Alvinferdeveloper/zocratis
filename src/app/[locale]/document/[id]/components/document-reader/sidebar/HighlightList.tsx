@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { MessageSquare } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -72,7 +73,15 @@ export const HighlightList: React.FC<HighlightListProps> = ({ kind, items, curre
                         style={{ backgroundColor: item.color }}
                       />
                       <span className="min-w-0">
-                        <span className="line-clamp-2 text-sm leading-snug">{item.title}</span>
+                        <span className="line-clamp-2 text-sm leading-snug">
+                          {item.fromChat && (
+                            <MessageSquare
+                              aria-label={tSidebar("fromChat")}
+                              className="mr-1 inline size-3.5 -translate-y-px text-muted-foreground"
+                            />
+                          )}
+                          {item.title}
+                        </span>
                         {item.detail && (
                           <span className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
                             {item.detail}

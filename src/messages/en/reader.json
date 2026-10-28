@@ -35,6 +35,7 @@
     },
     "page": "Page {page}",
     "noResults": "Nothing matches your search.",
+    "fromChat": "Saved from the chat",
     "notes": {
       "search": "Search your notes",
       "emptyTitle": "No notes yet",

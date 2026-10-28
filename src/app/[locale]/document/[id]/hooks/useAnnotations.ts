@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
-import { Annotation } from '@/app/types';
+import { Annotation, AnnotationOrigin } from '@/app/types';
 import { flashcardKeys } from '@/app/[locale]/document/[id]/components/flashcards/hooks/useFlashcards';
 
 const fetchAnnotations = async (documentId: string): Promise<Annotation[]> => {
@@ -34,8 +34,10 @@ interface CreateAnnotationRequest {
     aiResponse?: string;
     color: string;
     pageNumber: number;
-    boundingRect: { x1: number; y1: number; x2: number; y2: number; width: number; height: number; pageNumber: number };
-    rects: { x1: number; y1: number; x2: number; y2: number; width: number; height: number; pageNumber: number }[];
+    origin?: AnnotationOrigin;
+    // Required for highlighted notes; chat notes have none.
+    boundingRect?: { x1: number; y1: number; x2: number; y2: number; width: number; height: number; pageNumber: number };
+    rects?: { x1: number; y1: number; x2: number; y2: number; width: number; height: number; pageNumber: number }[];
     embedding?: string;
 }
 

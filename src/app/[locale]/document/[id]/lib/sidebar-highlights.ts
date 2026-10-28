@@ -7,6 +7,7 @@ export interface SidebarHighlight {
   color: string;
   title: string;
   detail?: string;
+  fromChat?: boolean;
 }
 
 // Notes are Markdown; the sidebar previews them as plain text.
@@ -25,6 +26,7 @@ export const noteToSidebarHighlight = (note: Annotation): SidebarHighlight => ({
   color: note.color,
   title: note.selectedText,
   detail: note.comment || (note.aiResponse ? toPlainText(note.aiResponse) : undefined),
+  fromChat: note.origin === "chat",
 });
 
 export const wordToSidebarHighlight = (entry: VocabularyEntry): SidebarHighlight => ({

@@ -35,6 +35,7 @@
     },
     "page": "Página {page}",
     "noResults": "Nada coincide con tu búsqueda.",
+    "fromChat": "Guardada desde el chat",
     "notes": {
       "search": "Buscar en tus notas",
       "emptyTitle": "Aún no hay notas",

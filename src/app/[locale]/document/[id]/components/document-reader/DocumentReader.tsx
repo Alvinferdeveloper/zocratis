@@ -8,6 +8,7 @@ import { useReadingProgress } from "@/app/[locale]/document/[id]/hooks/useReadin
 import { useDocumentIndexing } from "@/app/[locale]/document/[id]/hooks/useDocumentIndexing";
 import { useTextSelection } from "@/app/[locale]/document/[id]/hooks/useTextSelection";
 import { useChatSession } from "@/app/[locale]/document/[id]/hooks/useChatSession";
+import { useChatNotes } from "@/app/[locale]/document/[id]/hooks/useChatNotes";
 import { useAnnotationActions } from "@/app/[locale]/document/[id]/hooks/useAnnotationActions";
 import { useVocabularyActions } from "@/app/[locale]/document/[id]/hooks/useVocabularyActions";
 import { useLanguageMode } from "@/app/[locale]/document/[id]/hooks/useLanguageMode";
@@ -25,6 +26,7 @@ import { PdfControls } from "@/app/[locale]/document/[id]/components/document-re
 import { ResumeNotice } from "@/app/[locale]/document/[id]/components/document-reader/ResumeNotice";
 import { PdfViewer, PdfHighlightItem, type PdfNavigation } from "@/app/[locale]/document/[id]/components/document-reader/PdfViewer";
 import { ReaderSidebar, SIDEBAR_TABS, type SidebarTab } from "@/app/[locale]/document/[id]/components/document-reader/sidebar/ReaderSidebar";
+import type { SidebarHighlight } from "@/app/[locale]/document/[id]/lib/sidebar-highlights";
 import { useStoredChoice } from "@/hooks/useStoredChoice";
 import { useReaderSearch } from "@/app/[locale]/document/[id]/hooks/useReaderSearch";
 import type { TextSearchResult } from "@/app/[locale]/document/[id]/hooks/useDocumentTextSearch";
@@ -41,7 +43,7 @@ import { NoteDialog } from "@/app/[locale]/document/[id]/components/document-rea
 import { VocabularyCard } from "@/app/[locale]/document/[id]/components/document-reader/language-ui";
 import { VisualQueryPanel } from "@/app/[locale]/document/[id]/components/document-reader/VisualQueryPanel";
 import { DocumentFile } from "@/app/[locale]/document/[id]/page";
-import { Annotation, VocabularyEntry } from "@/app/types";
+import { Annotation, BoundingRect, VocabularyEntry } from "@/app/types";
 import { getApiErrorKey } from "@/lib/api-errors";
 
 // A passage's opening words are enough to find it on its page; if they aren't, the jump still lands on the page.
@@ -183,6 +185,14 @@ export const DocumentReader: React.FC<DocumentReaderProps> = ({ document, reques
         setIsNoteDialogOpen(true);
     };
 
+    const chatNotes = useChatNotes(document.id, currentPage);
+
+    // A chat note has no highlight to scroll to: go to its page and open it. The list has the latest edits.
+    const openChatNote = (note: Annotation) => {
+        navigationRef.current?.goToPage(note.pageNumber);
+        handleAnnotationClick(annotations.find((annotation) => annotation.id === note.id) ?? note);
+    };
+
     // The text and page are kept here: the reader's selection can change while the question is being written.
     const [cardSelection, setCardSelection] = useState<CardSelection | null>(null);
 
@@ -248,14 +258,16 @@ export const DocumentReader: React.FC<DocumentReaderProps> = ({ document, reques
               boundingRect: entry.boundingRect,
               rects: entry.rects,
           }))
-        : annotations.map((annotation) => ({
-              id: annotation.id,
-              color: annotation.color,
-              selectedText: annotation.selectedText,
-              pageNumber: annotation.pageNumber,
-              boundingRect: annotation.boundingRect,
-              rects: annotation.rects,
-          }));
+        : annotations
+              .filter((annotation): annotation is Annotation & { boundingRect: BoundingRect } => annotation.boundingRect !== null)
+              .map((annotation) => ({
+                  id: annotation.id,
+                  color: annotation.color,
+                  selectedText: annotation.selectedText,
+                  pageNumber: annotation.pageNumber,
+                  boundingRect: annotation.boundingRect,
+                  rects: annotation.rects,
+              }));
 
     const handleHighlightClick = (id: string, anchor: Element) => {
         if (languageMode.enabled) {
@@ -276,6 +288,12 @@ export const DocumentReader: React.FC<DocumentReaderProps> = ({ document, reques
             return;
         }
         navigationRef.current?.scrollToHighlight(id);
+    };
+
+    const handleNoteSelect = (item: SidebarHighlight) => {
+        const note = annotations.find((annotation) => annotation.id === item.id);
+        if (note?.origin === "chat") openChatNote(note);
+        else jumpToHighlight(item.id, false);
     };
 
     useEffect(() => {
@@ -368,7 +386,7 @@ export const DocumentReader: React.FC<DocumentReaderProps> = ({ document, reques
                                 notes={annotations}
                                 words={vocabularyEntries}
                                 wordsAction={<AddWordsToDeckButton documentId={document.id} className="mx-2 mb-2 justify-start" />}
-                                onNoteSelect={(note) => jumpToHighlight(note.id, false)}
+                                onNoteSelect={handleNoteSelect}
                                 onWordSelect={(word) => jumpToHighlight(word.id, true)}
                                 onSectionSelect={(section) => navigationRef.current?.goToPage(section.pageNumber, section.destination)}
                                 tab={sidebarTab}
@@ -460,7 +478,13 @@ export const DocumentReader: React.FC<DocumentReaderProps> = ({ document, reques
                             <ResizeHandle />
                             <Panel defaultSize="34" minSize="24" maxSize="50">
                                 <div className="h-full animate-in fade-in slide-in-from-right-4 duration-200 ease-[var(--ease-out)]">
-                                    <ChatPanel session={chat} onClose={() => setIsChatOpen(false)} onSourceSelect={handlePassageSelect} />
+                                    <ChatPanel
+                                        session={chat}
+                                        onClose={() => setIsChatOpen(false)}
+                                        onSourceSelect={handlePassageSelect}
+                                        chatNotes={chatNotes}
+                                        onNoteOpen={openChatNote}
+                                    />
                                 </div>
                             </Panel>
                         </>

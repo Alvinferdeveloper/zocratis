@@ -25,7 +25,10 @@
   },
   "assistantMessage": {
     "suggestionsLabel": "Preguntas sugeridas",
-    "sourceLabel": "Fuente {number}, página {page}"
+    "sourceLabel": "Fuente {number}, página {page}",
+    "saveAsNote": "Guardar como nota",
+    "savingNote": "Guardando…",
+    "noteSaved": "Guardada · Ver nota"
   },
   "status": {
     "thinking": "Zocratis está pensando",

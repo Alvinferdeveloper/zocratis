@@ -76,7 +76,14 @@ export const linkCitations = (text: string, sourceCount: number): string =>
     return index >= 1 && index <= sourceCount ? `[${n}](${SOURCE_HREF_PREFIX}${n})` : marker;
   });
 
-export const getMessageText = (message: { parts: Array<{ type: string; text?: string }> }): string =>
+// For text that leaves the chat (a saved note): "[2]" becomes the page its source is on.
+export const replaceCitations = (text: string, sources: ChatSource[], pageLabel: (page: number) => string): string =>
+  text.replace(CITATION, (marker, n: string) => {
+    const source = sources[Number(n) - 1];
+    return source ? `(${pageLabel(source.pageNumber)})` : marker;
+  });
+
+export const getMessageText =(message: { parts: Array<{ type: string; text?: string }> }): string =>
   message.parts
     .filter((part) => part.type === "text")
     .map((part) => part.text ?? "")

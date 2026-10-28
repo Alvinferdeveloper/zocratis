@@ -4,8 +4,9 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { ArrowLeft, History, SquarePen, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { ChatSource } from "@/app/types";
+import type { Annotation, ChatSource } from "@/app/types";
 import type { UseChatSessionReturn } from "@/app/[locale]/document/[id]/hooks/useChatSession";
+import type { UseChatNotesReturn } from "@/app/[locale]/document/[id]/hooks/useChatNotes";
 import { IconButton } from "@/components/ui/icon-button";
 import { TextQuote } from "@/app/[locale]/document/[id]/components/document-reader/shared/TextQuote";
 import { PromptComposer } from "@/app/[locale]/document/[id]/components/document-reader/shared/PromptComposer";
@@ -18,13 +19,15 @@ interface ChatPanelProps {
   session: UseChatSessionReturn;
   onClose: () => void;
   onSourceSelect: (source: ChatSource) => void;
+  chatNotes: UseChatNotesReturn;
+  onNoteOpen: (note: Annotation) => void;
 }
 
 type PanelView = "chat" | "history";
 
 const viewTransition = "flex min-h-0 flex-1 flex-col animate-in fade-in duration-200 ease-[var(--ease-out)]";
 
-export const ChatPanel: React.FC<ChatPanelProps> = ({ session, onClose, onSourceSelect }) => {
+export const ChatPanel: React.FC<ChatPanelProps> = ({ session, onClose, onSourceSelect, chatNotes, onNoteOpen }) => {
   const t = useTranslations("chat");
   const [view, setView] = useState<PanelView>("chat");
   const isBusy = session.status === "submitted" || session.status === "streaming";
@@ -92,6 +95,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ session, onClose, onSource
             onRetry={session.retry}
             onSuggestionSelect={session.send}
             onSourceSelect={onSourceSelect}
+            chatNotes={chatNotes}
+            onNoteOpen={onNoteOpen}
           />
           <div className="shrink-0 px-3 pb-3">
             <PromptComposer
