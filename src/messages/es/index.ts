@@ -12,6 +12,7 @@ import review from "./review.json";
 import workspace from "./workspace.json";
 import subscription from "./subscription.json";
 import landing from "./landing.json";
+import admin from "./admin.json";
 
 // Reference language: every other locale must provide these same namespaces and keys.
 const messages = {
@@ -29,6 +30,7 @@ const messages = {
   workspace,
   subscription,
   landing,
+  admin,
 };
 
 export default messages;

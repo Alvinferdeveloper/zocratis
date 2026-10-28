@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/ui/icon-button";
 import { ApiErrorText } from "@/components/api-error-message";
 import { getApiErrorKey } from "@/lib/api-errors";
+import { trackEvent } from "@/lib/product-events";
 import { MarkdownRenderer } from "@/app/[locale]/document/[id]/components/document-reader/note-ui";
 import { NoteStatus } from "@/app/[locale]/document/[id]/components/document-reader/note-ui/NoteLayout";
 import {
@@ -21,6 +22,7 @@ import { FlashcardForm } from "@/app/[locale]/document/[id]/components/flashcard
 interface Proposal {
   card: FlashcardContent;
   discarded: boolean;
+  edited: boolean;
 }
 
 interface NoteFlashcardProposalsProps {
@@ -44,7 +46,7 @@ export const NoteFlashcardProposals: React.FC<NoteFlashcardProposalsProps> = ({
 
   const requestProposals = useCallback(() => {
     generate.mutate(annotationId, {
-      onSuccess: (cards) => setProposals(cards.map((card) => ({ card, discarded: false }))),
+      onSuccess: (cards) => setProposals(cards.map((card) => ({ card, discarded: false, edited: false }))),
     });
   }, [generate, annotationId]);
 
@@ -59,13 +61,19 @@ export const NoteFlashcardProposals: React.FC<NoteFlashcardProposalsProps> = ({
   const updateProposal = (index: number, change: Partial<Proposal>) =>
     setProposals((current) => current.map((proposal, i) => (i === index ? { ...proposal, ...change } : proposal)));
 
-  const kept = proposals.filter((proposal) => !proposal.discarded).map((proposal) => proposal.card);
+  const keptProposals = proposals.filter((proposal) => !proposal.discarded);
+  const kept = keptProposals.map((proposal) => proposal.card);
 
   const handleSave = () => {
     save.mutate(
       { annotationId, cards: kept },
       {
         onSuccess: (saved) => {
+          trackEvent("flashcard_proposals_saved", {
+            proposed: proposals.length,
+            kept: saved.length,
+            edited: keptProposals.filter((proposal) => proposal.edited).length,
+          });
           toast.success(t("saved", { count: saved.length }));
           onBack();
         },
@@ -91,7 +99,7 @@ export const NoteFlashcardProposals: React.FC<NoteFlashcardProposalsProps> = ({
                       initial={proposal.card}
                       submitLabel={t("done")}
                       onSubmit={async (card) => {
-                        updateProposal(index, { card });
+                        updateProposal(index, { card, edited: true });
                         setEditingIndex(null);
                       }}
                       onCancel={() => setEditingIndex(null)}

@@ -22,12 +22,14 @@ import { Header, SortBy } from "@/app/[locale]/workspace/components/Header";
 import { DocumentList } from "@/app/[locale]/workspace/components/DocumentList";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Folder, Topic, Document } from "@/app/types";
+import { useTrackOnMount } from "@/lib/product-events";
 
 type PathItem = { type: 'topic' | 'folder'; item: Topic | Folder };
 
 const DashboardPage = () => {
   const t = useTranslations("workspace");
   const router = useRouter();
+  useTrackOnMount("workspace_opened");
   const [view, setView] = useState<"recent" | "topic">("recent");
   const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
   const [selectedFolder, setSelectedFolder] = useState<Folder | null>(null);

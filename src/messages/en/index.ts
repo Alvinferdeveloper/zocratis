@@ -13,6 +13,7 @@ import review from "./review.json";
 import workspace from "./workspace.json";
 import subscription from "./subscription.json";
 import landing from "./landing.json";
+import admin from "./admin.json";
 
 // Typed against Spanish, so a missing namespace or key fails the build instead of showing a raw key.
 const messages: typeof referenceMessages = {
@@ -30,6 +31,7 @@ const messages: typeof referenceMessages = {
   workspace,
   subscription,
   landing,
+  admin,
 };
 
 export default messages;

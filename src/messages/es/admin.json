@@ -1,0 +1,40 @@
+{
+  "metrics": {
+    "title": "Métricas",
+    "intro": "Semanas de lunes a domingo (UTC). Un usuario está activo el día que abre la app, usa la IA o repasa una tarjeta.",
+    "forbidden": "Esta página es solo para administradores.",
+    "error": "No se pudieron cargar las métricas.",
+    "retry": "Reintentar",
+    "summary": {
+      "activeUsers": "Activos esta semana",
+      "newUsers": "Nuevos esta semana",
+      "explanationsPerActiveDay": "Explicaciones por día activo",
+      "reviewAccuracy": "Aciertos en repaso",
+      "examAccuracy": "Aciertos en exámenes",
+      "periodNote": "Las tres últimas cifras cubren las últimas {weeks} semanas, desde el {start}."
+    },
+    "retention": {
+      "title": "Retención semanal",
+      "hint": "Qué parte de cada semana de alta vuelve en las semanas siguientes.",
+      "cohort": "Semana de alta",
+      "users": "Usuarios",
+      "week": "S+{n}",
+      "empty": "Nadie se ha registrado en las últimas {weeks} semanas."
+    },
+    "cycle": {
+      "title": "Ciclo de estudio esta semana",
+      "hint": "Usuarios distintos en cada paso; no tienen por qué ser los mismos.",
+      "read": "Leyeron",
+      "asked": "Preguntaron a la IA",
+      "saved": "Guardaron nota o tarjeta",
+      "reviewed": "Repasaron"
+    },
+    "aiCards": {
+      "title": "Tarjetas propuestas por la IA",
+      "hint": "Últimas {weeks} semanas, desde que se registran estos datos.",
+      "proposed": "Propuestas",
+      "kept": "Guardadas",
+      "edited": "Editadas antes de guardar"
+    }
+  }
+}

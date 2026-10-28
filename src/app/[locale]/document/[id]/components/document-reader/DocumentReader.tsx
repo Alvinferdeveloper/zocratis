@@ -45,6 +45,7 @@ import { VisualQueryPanel } from "@/app/[locale]/document/[id]/components/docume
 import { DocumentFile } from "@/app/[locale]/document/[id]/page";
 import { Annotation, BoundingRect, VocabularyEntry } from "@/app/types";
 import { getApiErrorKey } from "@/lib/api-errors";
+import { useTrackOnMount } from "@/lib/product-events";
 
 // A passage's opening words are enough to find it on its page; if they aren't, the jump still lands on the page.
 const PASSAGE_OPENING_WORDS = 8;
@@ -66,6 +67,7 @@ export const DocumentReader: React.FC<DocumentReaderProps> = ({ document, reques
         zoomOut,
     } = useDocumentViewer();
 
+    useTrackOnMount("reader_opened", { documentId: document.id });
     const exam = useExamMode();
     const [pdfDoc, setPdfDoc] = useState<PdfDocument | null>(null);
     const [isThumbnailsOpen, toggleThumbnails] = useStoredBoolean("reader:thumbnailsOpen");

@@ -12,6 +12,7 @@
     "exams": "Exams",
     "examAttempt": "Exam",
     "flashcards": "Flashcards",
-    "review": "Review"
+    "review": "Review",
+    "adminMetrics": "Metrics"
   }
 }

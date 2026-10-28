@@ -1,0 +1,40 @@
+{
+  "metrics": {
+    "title": "Metrics",
+    "intro": "Weeks run Monday to Sunday (UTC). A user is active on a day they open the app, use the AI or review a card.",
+    "forbidden": "This page is for admins only.",
+    "error": "The metrics couldn't be loaded.",
+    "retry": "Try again",
+    "summary": {
+      "activeUsers": "Active this week",
+      "newUsers": "New this week",
+      "explanationsPerActiveDay": "Explanations per active day",
+      "reviewAccuracy": "Recalled in reviews",
+      "examAccuracy": "Correct in exams",
+      "periodNote": "The last three figures cover the past {weeks} weeks, since {start}."
+    },
+    "retention": {
+      "title": "Weekly retention",
+      "hint": "How much of each signup week comes back in the following weeks.",
+      "cohort": "Signup week",
+      "users": "Users",
+      "week": "W+{n}",
+      "empty": "Nobody signed up in the past {weeks} weeks."
+    },
+    "cycle": {
+      "title": "Study cycle this week",
+      "hint": "Distinct users at each step; they need not be the same people.",
+      "read": "Read",
+      "asked": "Asked the AI",
+      "saved": "Saved a note or card",
+      "reviewed": "Reviewed"
+    },
+    "aiCards": {
+      "title": "Cards proposed by the AI",
+      "hint": "Past {weeks} weeks, since this data is recorded.",
+      "proposed": "Proposed",
+      "kept": "Saved",
+      "edited": "Edited before saving"
+    }
+  }
+}
