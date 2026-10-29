@@ -78,6 +78,22 @@
     "note": "Nota",
     "card": "Tarjeta"
   },
+  "explain": {
+    "ariaLabel": "Explicación",
+    "back": "Volver",
+    "coreIdea": "Idea central",
+    "level": "{level, select, 1 {Nivel 1 de 3} 2 {Más claro · 2 de 3} other {Lo esencial · 3 de 3}}",
+    "keyTerms": "Términos clave",
+    "definedOn": "El documento lo define en la pág. {page} →",
+    "simplify": "No entiendo",
+    "continueInChat": "Seguir en el chat",
+    "saveNote": "Guardar nota",
+    "noteSaved": "Nota guardada",
+    "card": "Tarjeta",
+    "retry": "Reintentar",
+    "cardFrontPassage": "¿Qué significa «{excerpt}»?",
+    "cardFrontTerm": "¿Qué es «{term}»?"
+  },
   "visualQuery": {
     "title": "Preguntar sobre imagen o fórmula",
     "description": "Haz una pregunta sobre la imagen o fórmula seleccionada en el documento.",

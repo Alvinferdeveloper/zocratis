@@ -41,6 +41,8 @@ import { SelectionPopup } from "@/app/[locale]/document/[id]/components/document
 import { QuickTranslateBubble } from "@/app/[locale]/document/[id]/components/document-reader/QuickTranslateBubble";
 import { NoteDialog } from "@/app/[locale]/document/[id]/components/document-reader/note-ui";
 import { VocabularyCard } from "@/app/[locale]/document/[id]/components/document-reader/language-ui";
+import { ExplainCard, type ExplainSelection } from "@/app/[locale]/document/[id]/components/document-reader/explain-ui";
+import { DEFAULT_NOTE_COLOR } from "@/app/[locale]/document/[id]/lib/note-colors";
 import { VisualQueryPanel } from "@/app/[locale]/document/[id]/components/document-reader/VisualQueryPanel";
 import { DocumentFile } from "@/app/[locale]/document/[id]/page";
 import { Annotation, BoundingRect, VocabularyEntry } from "@/app/types";
@@ -207,6 +209,33 @@ export const DocumentReader: React.FC<DocumentReaderProps> = ({ document, reques
         setCardSelection(null);
         clearSelection();
     }, [clearSelection]);
+
+    // Like the card, the explanation keeps its own copy of the selection while the student explores it.
+    const [explainSelection, setExplainSelection] = useState<ExplainSelection | null>(null);
+
+    const handleExplainPassageClick = (fallbackAnchor: Element) => {
+        if (!selectedText) return;
+        setExplainSelection({ text: selectedText, pageNumber: selectedPage, anchor: getSelectionAnchor(fallbackAnchor) });
+    };
+
+    const handleExplainCardClose = useCallback(() => {
+        setExplainSelection(null);
+        clearSelection();
+    }, [clearSelection]);
+
+    // The card reviews the explanation's suggestion before it is saved, anchored where the explanation was.
+    const handleExplanationCard = (card: { front: string; back: string }) => {
+        if (!explainSelection) return;
+        setCardSelection({ ...explainSelection, suggestion: card });
+        setExplainSelection(null);
+    };
+
+    const handleExplanationToChat = () => {
+        if (!explainSelection) return;
+        chat.attachContext({ text: explainSelection.text, page: explainSelection.pageNumber });
+        setIsChatOpen(true);
+        handleExplainCardClose();
+    };
 
     const handleNoteDialogClose = () => {
         setIsNoteDialogOpen(false);
@@ -428,7 +457,7 @@ export const DocumentReader: React.FC<DocumentReaderProps> = ({ document, reques
                                 viewportRef={setReaderViewport}
                                 selectionTip={
                                     <div>
-                                        {selectedText && !exam.enabled && !cardSelection && (
+                                        {selectedText && !exam.enabled && !cardSelection && !explainSelection && (
                                             <div key={selectedText} className="flex flex-col items-center gap-1.5">
                                                 <QuickTranslateBubble
                                                     translation={quickTranslate.translation}
@@ -439,7 +468,7 @@ export const DocumentReader: React.FC<DocumentReaderProps> = ({ document, reques
                                                     mode={languageMode.enabled ? "language" : "notes"}
                                                     onChatClick={handleAskAboutSelection}
                                                     onCreateNoteClick={handleNoteDialogOpen}
-                                                    onExplainClick={handleExplainClick}
+                                                    onExplainClick={languageMode.enabled ? handleExplainClick : handleExplainPassageClick}
                                                     onCreateCardClick={handleCreateCardClick}
                                                 />
                                             </div>
@@ -528,6 +557,22 @@ export const DocumentReader: React.FC<DocumentReaderProps> = ({ document, reques
                 onColorChange={handleVocabularyColorChange}
                 onEntryUpdated={setEditingVocabularyEntry}
                 existingEntry={editingVocabularyEntry}
+            />
+
+            <ExplainCard
+                documentId={document.id}
+                selection={explainSelection}
+                onClose={handleExplainCardClose}
+                portalContainer={readerViewport}
+                onSaveNote={(markdown) =>
+                    handleSaveNote(
+                        { selectedText: explainSelection?.text ?? "", comment: "", aiResponse: markdown, color: DEFAULT_NOTE_COLOR },
+                        null
+                    )
+                }
+                onCreateCard={handleExplanationCard}
+                onContinueInChat={handleExplanationToChat}
+                onGoToPage={(page) => navigationRef.current?.goToPage(page)}
             />
 
             <SelectionCardPopover

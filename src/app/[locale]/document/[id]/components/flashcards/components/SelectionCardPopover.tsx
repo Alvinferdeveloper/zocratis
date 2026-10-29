@@ -15,6 +15,8 @@ export interface CardSelection {
   text: string;
   pageNumber: number;
   anchor: LiveAnchorTarget;
+  // A suggested card to review (from an explanation); without it the passage is the answer.
+  suggestion?: { front: string; back: string };
 }
 
 interface SelectionCardPopoverProps {
@@ -76,7 +78,10 @@ export const SelectionCardPopover: React.FC<SelectionCardPopoverProps> = ({
               {t("selection.title", { page: selection.pageNumber })}
             </p>
             <FlashcardForm
-              initial={{ front: "", back: selection.text.slice(0, FLASHCARD_BACK_MAX_LENGTH) }}
+              initial={{
+                front: selection.suggestion?.front ?? "",
+                back: (selection.suggestion?.back ?? selection.text).slice(0, FLASHCARD_BACK_MAX_LENGTH),
+              }}
               submitLabel={t("form.save")}
               onSubmit={handleSubmit}
               onCancel={onClose}

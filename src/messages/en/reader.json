@@ -78,6 +78,22 @@
     "note": "Note",
     "card": "Card"
   },
+  "explain": {
+    "ariaLabel": "Explanation",
+    "back": "Back",
+    "coreIdea": "Core idea",
+    "level": "{level, select, 1 {Level 1 of 3} 2 {Clearer · 2 of 3} other {The essentials · 3 of 3}}",
+    "keyTerms": "Key terms",
+    "definedOn": "The document defines it on p. {page} →",
+    "simplify": "I don't get it",
+    "continueInChat": "Continue in the chat",
+    "saveNote": "Save note",
+    "noteSaved": "Note saved",
+    "card": "Card",
+    "retry": "Try again",
+    "cardFrontPassage": "What does “{excerpt}” mean?",
+    "cardFrontTerm": "What is “{term}”?"
+  },
   "visualQuery": {
     "title": "Ask about an image or formula",
     "description": "Ask a question about the image or formula selected in the document.",

@@ -1,6 +1,6 @@
 
 import { motion } from "motion/react";
-import { MessageSquare, StickyNote, Languages, Layers } from "lucide-react";
+import { MessageSquare, StickyNote, Languages, Layers, Lightbulb } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 
@@ -9,7 +9,8 @@ interface SelectionPopupProps {
     mode?: "notes" | "language";
     onChatClick: () => void;
     onCreateNoteClick: () => void;
-    onExplainClick?: (anchor: Element) => void;
+    // Language mode explains a word on the vocabulary card; notes mode explains the passage.
+    onExplainClick: (anchor: Element) => void;
     onCreateCardClick: (anchor: Element) => void;
 }
 
@@ -45,17 +46,16 @@ export const SelectionPopup: React.FC<SelectionPopupProps> = ({
                 {t("chat")}
             </Button>
             <div className="h-4 w-px bg-border" />
-            {isLanguageMode ? (
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => onExplainClick?.(e.currentTarget)}
-                    className="gap-1.5 text-foreground"
-                >
-                    <Languages className="size-3.5" />
-                    {t("explain")}
-                </Button>
-            ) : (
+            <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => onExplainClick(e.currentTarget)}
+                className="gap-1.5 text-foreground"
+            >
+                {isLanguageMode ? <Languages className="size-3.5" /> : <Lightbulb className="size-3.5" />}
+                {t("explain")}
+            </Button>
+            {!isLanguageMode && (
                 <Button
                     variant="ghost"
                     size="sm"
