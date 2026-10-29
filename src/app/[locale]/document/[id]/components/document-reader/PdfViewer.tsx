@@ -247,6 +247,13 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
         highlightsRef.current = highlights;
     }, [highlights]);
 
+    // The library keeps the first enableAreaSelection it gets, so it reads the mode through a ref.
+    const regionModeRef = useRef(regionMode);
+    useEffect(() => {
+        regionModeRef.current = regionMode;
+    }, [regionMode]);
+    const enableAreaSelection = useCallback((event: MouseEvent) => regionModeRef.current || event.altKey, []);
+
     const handleSelection = useCallback((selection: SelectionEvent) => {
         const position = selection?.position;
         if (!position) return;
@@ -304,7 +311,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
                         <PdfHighlighter
                             pdfScaleValue={scale}
                             pdfDocument={pdfDoc}
-                            enableAreaSelection={(event) => regionMode || event.altKey}
+                            enableAreaSelection={enableAreaSelection}
                             highlights={highlights}
                             onSelection={handleSelection}
                             selectionTip={selectionTip}
