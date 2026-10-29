@@ -8,6 +8,7 @@ import { AnnotationRect, BoundingRect } from "@/app/types";
 import { usePdfPageOverlay } from "../../hooks/usePdfPageOverlay";
 import { PdfSkeleton } from "./PdfSkeleton";
 import type { PdfDocument } from "@/app/[locale]/document/[id]/lib/pdf-document";
+import type { PageRegion } from "@/app/[locale]/document/[id]/lib/region-image";
 import type { PdfDestination } from "@/app/[locale]/document/[id]/lib/pdf-outline";
 import { clearSearchHighlight, findTextLayerRange, showSearchHighlight } from "@/app/[locale]/document/[id]/lib/text-layer-highlight";
 
@@ -20,12 +21,6 @@ export interface PdfNavigation {
     // Jumps to the page and highlights the nth match of the text there (exact search, semantic passages).
     showTextMatch: (pageNumber: number, query: string, occurrence: number) => void;
     clearTextMatch: () => void;
-}
-
-interface RegionSelection {
-    imageBase64: string;
-    pageNumber: number;
-    boundingRect: { x1: number; y1: number; x2: number; y2: number };
 }
 
 export interface PdfHighlightItem {
@@ -52,7 +47,7 @@ interface PdfViewerProps {
     onPdfLoad?: (pdfDoc: PdfDocument) => void;
     navigationRef?: React.Ref<PdfNavigation>;
     regionMode?: boolean;
-    onRegionSelection?: (region: RegionSelection) => void;
+    onRegionSelection?: (region: PageRegion) => void;
     viewportRef?: React.Ref<HTMLDivElement>;
     // Page to open on once pdf.js has laid out the pages; onReady fires after that, or right away without one.
     initialPage?: number;
@@ -61,7 +56,7 @@ interface PdfViewerProps {
 
 interface SelectionEvent {
     type?: "text" | "area";
-    content?: { text?: string; image?: string };
+    content?: { text?: string };
     position?: {
         boundingRect: { x1: number; y1: number; x2: number; y2: number; width: number; height: number; pageNumber: number };
         rects?: Array<{ x1: number; y1: number; x2: number; y2: number; width: number; height: number }>;
@@ -257,13 +252,15 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
         if (!position) return;
 
         if (selection.type === "area") {
-            const image = selection.content?.image;
-            if (image && onRegionSelection) {
-                const { x1, y1, x2, y2, pageNumber } = position.boundingRect;
+            // In fractions of the page: the region is redrawn from the PDF, whatever the zoom.
+            const { x1, y1, x2, y2, width, height, pageNumber } = position.boundingRect;
+            if (onRegionSelection && width > 0 && height > 0 && x2 > x1 && y2 > y1) {
                 onRegionSelection({
-                    imageBase64: image,
                     pageNumber,
-                    boundingRect: { x1, y1, x2, y2 },
+                    left: x1 / width,
+                    top: y1 / height,
+                    width: (x2 - x1) / width,
+                    height: (y2 - y1) / height,
                 });
             }
             return;

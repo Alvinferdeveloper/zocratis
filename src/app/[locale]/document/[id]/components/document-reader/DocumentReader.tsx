@@ -12,12 +12,11 @@ import { useChatNotes } from "@/app/[locale]/document/[id]/hooks/useChatNotes";
 import { useAnnotationActions } from "@/app/[locale]/document/[id]/hooks/useAnnotationActions";
 import { useVocabularyActions } from "@/app/[locale]/document/[id]/hooks/useVocabularyActions";
 import { useLanguageMode } from "@/app/[locale]/document/[id]/hooks/useLanguageMode";
-import { useDocumentImages } from "@/app/[locale]/document/[id]/hooks/useDocumentImages";
 import { useVisualQuery } from "@/app/[locale]/document/[id]/hooks/useVisualQuery";
 import { useQuickTranslate } from "@/app/[locale]/document/[id]/hooks/useQuickTranslate";
 import { useDocumentLanguages } from "@/app/[locale]/document/[id]/hooks/useDocumentLanguages";
 import { LiveAnchorTarget } from "@/app/[locale]/document/[id]/hooks/useLiveAnchor";
-import { findOverlappingImage } from "@/app/[locale]/document/[id]/lib/region-overlap";
+import { captureRegion, type PageRegion } from "@/app/[locale]/document/[id]/lib/region-image";
 import { getSelectionAnchor } from "@/app/[locale]/document/[id]/lib/selection-anchor";
 import { ResizeHandle } from "@/components/ui/resize-handle";
 
@@ -338,47 +337,34 @@ export const DocumentReader: React.FC<DocumentReaderProps> = ({ document, reques
     const [isVisualQueryOpen, setIsVisualQueryOpen] = useState(false);
     const [pendingRegion, setPendingRegion] = useState<{
         pageNumber: number;
-        imageBase64?: string;
-        imageXref?: number;
+        imageBase64: string;
+        text: string;
     } | null>(null);
 
-    const { data: documentImages = [] } = useDocumentImages(document.id);
     const visualQuery = useVisualQuery(document.id);
 
     const handleToggleRegionMode = () => setRegionMode((prev) => !prev);
 
-    const handleRegionSelection = (region: {
-        imageBase64: string;
-        pageNumber: number;
-        boundingRect: { x1: number; y1: number; x2: number; y2: number };
-    }) => {
-        const matchedImage = findOverlappingImage(
-            region.boundingRect,
-            region.pageNumber,
-            documentImages
-        );
-
-        setPendingRegion({
-            pageNumber: region.pageNumber,
-            imageBase64: region.imageBase64,
-            imageXref: matchedImage?.xref,
-        });
-        setIsVisualQueryOpen(true);
-        visualQuery.reset();
+    // The AI gets exactly what was cropped, redrawn sharp from the PDF, plus any text inside it.
+    const handleRegionSelection = async (region: PageRegion) => {
+        if (!pdfDoc) return;
+        try {
+            const { image, text } = await captureRegion(pdfDoc, region);
+            setPendingRegion({ pageNumber: region.pageNumber, imageBase64: image, text });
+            setIsVisualQueryOpen(true);
+            visualQuery.reset();
+        } catch (error) {
+            console.error("Failed to capture the selected region", error);
+        }
     };
 
     const handleAskVisualQuery = (question: string) => {
         if (!pendingRegion) return;
         visualQuery.mutate({
             question,
-            imageXref: pendingRegion.imageXref,
             pageNumber: pendingRegion.pageNumber,
-            // Always send the canvas crop too when there's no xref match;
-            // when there is a match, the backend re-extracts the original
-            // binary from the PDF via the xref instead of using this.
-            imageBase64: pendingRegion.imageXref
-                ? undefined
-                : pendingRegion.imageBase64,
+            imageBase64: pendingRegion.imageBase64,
+            regionText: pendingRegion.text || undefined,
         });
     };
 

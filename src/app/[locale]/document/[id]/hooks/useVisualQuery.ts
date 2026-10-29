@@ -3,9 +3,9 @@ import { api } from "@/lib/api-client";
 
 export interface VisualQueryRequest {
   question: string;
-  imageBase64?: string;
-  imageXref?: number;
+  imageBase64: string;
   pageNumber?: number;
+  regionText?: string;
 }
 
 const postVisualQuery = async (
