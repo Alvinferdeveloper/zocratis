@@ -35,7 +35,8 @@
   "source": {
     "manual": "Escrita por ti",
     "note": "De una nota",
-    "vocabulary": "De tus palabras"
+    "vocabulary": "De tus palabras",
+    "check": "De una comprobación"
   },
   "words": {
     "addAll": "Agregar {count, plural, one {# palabra} other {# palabras}} al repaso",

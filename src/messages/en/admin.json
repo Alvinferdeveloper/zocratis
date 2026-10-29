@@ -35,6 +35,13 @@
       "proposed": "Proposed",
       "kept": "Saved",
       "edited": "Edited before saving"
+    },
+    "checks": {
+      "title": "Checks after explaining",
+      "hint": "Past {weeks} weeks. Each one missed becomes a card.",
+      "done": "Done",
+      "passed": "Passed",
+      "cards": "Cards created"
     }
   }
 }

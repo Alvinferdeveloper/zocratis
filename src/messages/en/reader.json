@@ -92,7 +92,20 @@
     "card": "Card",
     "retry": "Try again",
     "cardFrontPassage": "What does “{excerpt}” mean?",
-    "cardFrontTerm": "What is “{term}”?"
+    "cardFrontTerm": "What is “{term}”?",
+    "check": {
+      "offer": "Shall we check it?",
+      "start": "Check",
+      "placeholder": "Answer in your own words",
+      "reveal": "Show answer",
+      "yourAnswer": "Your answer",
+      "expected": "Expected answer",
+      "question": "Did you have it?",
+      "passed": "Yes, I had it",
+      "failed": "Not quite",
+      "passedDone": "Good. Keep reading.",
+      "failedDone": "Added to your review."
+    }
   },
   "visualQuery": {
     "title": "Ask about an image or formula",

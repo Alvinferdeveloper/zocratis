@@ -10,6 +10,7 @@ export interface Explanation {
   explanation: string;
   keyTerms: string[];
   definedOnPage: number | null;
+  check: { question: string; answer: string } | null;
 }
 
 export type ExplainLevel = 1 | 2 | 3;

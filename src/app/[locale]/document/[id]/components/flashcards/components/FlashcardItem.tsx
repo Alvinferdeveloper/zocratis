@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowUpRight, Languages, Pencil, PenLine, StickyNote, Trash2 } from "lucide-react";
+import { ArrowUpRight, CircleHelp, Languages, Pencil, PenLine, StickyNote, Trash2 } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/config/routes";
@@ -14,6 +14,7 @@ const SOURCE_ICONS: Record<FlashcardSource, React.ComponentType<{ className?: st
   manual: PenLine,
   note: StickyNote,
   vocabulary: Languages,
+  check: CircleHelp,
 };
 
 // Where the card stands in spaced repetition: not started, due, or when it comes back.

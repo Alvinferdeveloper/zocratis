@@ -92,7 +92,20 @@
     "card": "Tarjeta",
     "retry": "Reintentar",
     "cardFrontPassage": "¿Qué significa «{excerpt}»?",
-    "cardFrontTerm": "¿Qué es «{term}»?"
+    "cardFrontTerm": "¿Qué es «{term}»?",
+    "check": {
+      "offer": "¿Lo comprobamos?",
+      "start": "Comprobar",
+      "placeholder": "Respóndela con tus palabras",
+      "reveal": "Ver respuesta",
+      "yourAnswer": "Tu respuesta",
+      "expected": "Respuesta esperada",
+      "question": "¿La tenías?",
+      "passed": "Sí, la tenía",
+      "failed": "No del todo",
+      "passedDone": "Bien. Puedes seguir leyendo.",
+      "failedDone": "Añadida a tu repaso."
+    }
   },
   "visualQuery": {
     "title": "Preguntar sobre imagen o fórmula",

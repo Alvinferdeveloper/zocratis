@@ -35,7 +35,8 @@
   "source": {
     "manual": "Written by you",
     "note": "From a note",
-    "vocabulary": "From your words"
+    "vocabulary": "From your words",
+    "check": "From a check"
   },
   "words": {
     "addAll": "Add {count, plural, one {# word} other {# words}} to review",

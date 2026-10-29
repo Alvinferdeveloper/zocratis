@@ -16,6 +16,7 @@ import {
   useExplanation,
 } from "@/app/[locale]/document/[id]/hooks/useExplanation";
 import { explanationToMarkdown, toExcerpt } from "@/app/[locale]/document/[id]/lib/explanation";
+import { ComprehensionCheck } from "./ComprehensionCheck";
 
 export interface ExplainPanelProps {
   documentId: string;
@@ -149,6 +150,16 @@ export const ExplainPanel: React.FC<ExplainPanelProps> = ({
                 >
                   {t("definedOn", { page: explanation.definedOnPage })}
                 </Button>
+              )}
+
+              {explanation.check && (
+                // Each term and level has its own question, started fresh.
+                <ComprehensionCheck
+                  key={viewKey}
+                  documentId={documentId}
+                  pageNumber={subject.pageNumber}
+                  check={explanation.check}
+                />
               )}
             </>
           )

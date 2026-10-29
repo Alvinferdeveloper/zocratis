@@ -63,6 +63,19 @@ const MetricsContent: React.FC<{ metrics: ProductMetrics }> = ({ metrics }) => {
           ]}
         />
       </MetricSection>
+
+      <MetricSection title={t("checks.title")} hint={t("checks.hint", { weeks: RETENTION_WEEKS })}>
+        <FigureList
+          figures={[
+            { label: t("checks.done"), value: String(period.checks.done) },
+            {
+              label: t("checks.passed"),
+              value: percent(period.checks.done > 0 ? period.checks.passed / period.checks.done : null),
+            },
+            { label: t("checks.cards"), value: String(period.checks.done - period.checks.passed) },
+          ]}
+        />
+      </MetricSection>
     </>
   );
 };

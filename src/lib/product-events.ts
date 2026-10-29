@@ -6,6 +6,7 @@ interface ProductEvents {
   workspace_opened: undefined;
   reader_opened: { documentId: string };
   flashcard_proposals_saved: { proposed: number; kept: number; edited: number };
+  comprehension_checked: { passed: boolean };
 }
 
 type ProductEventName = keyof ProductEvents;

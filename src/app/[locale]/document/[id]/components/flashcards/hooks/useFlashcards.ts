@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api-client";
 import type { VocabularyEntry } from "@/app/types";
 
-export const FLASHCARD_SOURCES = ["manual", "note", "vocabulary"] as const;
+export const FLASHCARD_SOURCES = ["manual", "note", "vocabulary", "check"] as const;
 export type FlashcardSource = (typeof FLASHCARD_SOURCES)[number];
 
 export type FlashcardState = "new" | "learning" | "review" | "relearning";
@@ -55,7 +55,7 @@ const useInvalidateFlashcards = () => {
 export const useCreateFlashcard = (documentId: string) => {
   const invalidate = useInvalidateFlashcards();
   return useMutation({
-    mutationFn: async (card: FlashcardContent & { pageNumber?: number }) => {
+    mutationFn: async (card: FlashcardContent & { pageNumber?: number; source?: "manual" | "check" }) => {
       const { data } = await api.post<Flashcard>(`/documents/${documentId}/flashcards`, card);
       return data;
     },

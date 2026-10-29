@@ -35,6 +35,13 @@
       "proposed": "Propuestas",
       "kept": "Guardadas",
       "edited": "Editadas antes de guardar"
+    },
+    "checks": {
+      "title": "Comprobaciones tras explicar",
+      "hint": "Últimas {weeks} semanas. Cada una que no se acierta se convierte en tarjeta.",
+      "done": "Hechas",
+      "passed": "Acertadas",
+      "cards": "Tarjetas creadas"
     }
   }
 }

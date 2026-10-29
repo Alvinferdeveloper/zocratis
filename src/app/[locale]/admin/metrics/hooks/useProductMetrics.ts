@@ -15,6 +15,7 @@ export interface ProductMetrics {
     reviewAccuracy: number | null;
     examAccuracy: number | null;
     aiCards: { proposed: number; kept: number; edited: number };
+    checks: { done: number; passed: number };
   };
   retention: { cohortWeek: string; users: number; retained: number[] }[];
 }
