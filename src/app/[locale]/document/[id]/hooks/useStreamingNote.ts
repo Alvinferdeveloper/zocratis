@@ -12,6 +12,7 @@ interface UseStreamingNoteBody {
   prompt: string;
   documentContext?: string;
   originalNote?: string;
+  responseLanguage?: string;
 }
 
 interface UseStreamingNoteReturn {

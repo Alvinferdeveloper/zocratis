@@ -3,14 +3,23 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocale } from "next-intl";
 import { api } from "@/lib/api-client";
 import { useRefreshUsage } from "@/app/[locale]/subscription/hooks/useSubscription";
+import { glossaryKey } from "@/app/[locale]/document/[id]/hooks/useGlossary";
 import type { RegionKind } from "@/app/[locale]/document/[id]/lib/page-regions";
 import type { PageRegion } from "@/app/[locale]/document/[id]/lib/region-image";
+
+// A term as the document writes it, and in the student's language when that differs.
+export interface KeyTerm {
+  original: string;
+  translation: string | null;
+}
 
 // POST /ai/explain.
 export interface Explanation {
   coreIdea: string;
   explanation: string;
-  keyTerms: string[];
+  keyTerms: KeyTerm[];
+  // When explaining a term: that term in the student's language, if the document uses another one.
+  termTranslation: string | null;
   definedOnPage: number | null;
   check: { question: string; answer: string } | null;
 }
@@ -72,6 +81,8 @@ export const useExplanation = (documentId: string, subject: ExplainSubject) => {
         explainedTerms: trail,
         responseLanguage: locale,
       });
+      // A term explained for the first time joins the document's glossary.
+      if (term) queryClient.invalidateQueries({ queryKey: glossaryKey(documentId) });
       return data.explanation;
     } finally {
       refreshUsage();
@@ -95,7 +106,9 @@ export const useExplanation = (documentId: string, subject: ExplainSubject) => {
   });
 
   // The model is told the trail too; this keeps the student from walking in circles regardless.
-  const keyTerms = (query.data?.keyTerms ?? []).filter((candidate) => !trail.some((seen) => sameTerm(seen, candidate)));
+  const keyTerms = (query.data?.keyTerms ?? []).filter(
+    (candidate) => !trail.some((seen) => sameTerm(seen, candidate.original))
+  );
 
   return {
     explanation: query.data ? { ...query.data, keyTerms } : null,
@@ -107,7 +120,8 @@ export const useExplanation = (documentId: string, subject: ExplainSubject) => {
     trail,
     level,
     simplify: () => setLevels((current) => ({ ...current, [term]: Math.min(level + 1, MAX_EXPLAIN_LEVEL) as ExplainLevel })),
-    openTerm: (next: string) => setTrail((current) => [...current, next]),
+    // The trail keeps the document's spelling: it is what the API looks up and saves.
+    openTerm: (next: KeyTerm) => setTrail((current) => [...current, next.original]),
     back: () => setTrail((current) => current.slice(0, -1)),
   };
 };

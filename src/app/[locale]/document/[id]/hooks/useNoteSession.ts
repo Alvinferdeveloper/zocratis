@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import type referenceMessages from "@/messages/es";
 import { Annotation } from "@/app/types";
 import { useStreamingNote } from "@/app/[locale]/document/[id]/hooks/useStreamingNote";
@@ -62,6 +62,7 @@ export const useNoteSession = ({
   }, [stopStream]);
   useEffect(() => () => stopOnUnmount.current(), []);
 
+  const locale = useLocale();
   const requestNote = useCallback(
     async (prompt: string, originalNote?: string): Promise<string | null> => {
       stoppedByUser.current = false;
@@ -72,6 +73,8 @@ export const useNoteSession = ({
           prompt,
           documentContext: `Documento: ${documentFileName}`,
           originalNote,
+          // Notes speak the reader's language, keeping the document's terms in brackets.
+          responseLanguage: locale,
         });
         if (!result && !stoppedByUser.current) setError({ key: "generation", reason: "unknown" });
         return result || null;
@@ -80,7 +83,7 @@ export const useNoteSession = ({
         return null;
       }
     },
-    [complete, selectedText, documentFileName]
+    [complete, selectedText, documentFileName, locale]
   );
 
   const persist = useCallback(

@@ -410,6 +410,7 @@ export const DocumentReader: React.FC<DocumentReaderProps> = ({ document, reques
                         {isThumbnailsOpen && pdfDoc && (
                             <ReaderSidebar
                                 pdf={pdfDoc}
+                                documentId={document.id}
                                 currentPage={currentPage}
                                 onPageClick={handleThumbnailClick}
                                 selectedPages={exam.enabled ? exam.selectedPages : undefined}

@@ -31,7 +31,8 @@
       "outline": "Índice",
       "notes": "Notas",
       "vocabulary": "Palabras",
-      "search": "Buscar"
+      "search": "Buscar",
+      "glossary": "Glosario"
     },
     "page": "Página {page}",
     "noResults": "Nada coincide con tu búsqueda.",
@@ -71,7 +72,13 @@
       "searching": "Buscando…",
       "semanticEmpty": "No encontramos pasajes sobre eso en el documento."
     },
-    "fromRegion": "Guardada desde una figura, tabla o fórmula"
+    "fromRegion": "Guardada desde una figura, tabla o fórmula",
+    "glossary": {
+      "search": "Buscar en el glosario",
+      "emptyTitle": "Tu glosario está vacío",
+      "emptyHint": "Cada término que abras al explicar un pasaje se guarda aquí, con su idea central y dónde se define.",
+      "definedOn": "Definido en la pág. {page}"
+    }
   },
   "selectionPopup": {
     "chat": "Chat",

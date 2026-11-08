@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useTranslations } from "next-intl";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Files, Languages, ListTree, Search, StickyNote, type LucideIcon } from "lucide-react";
+import { BookA, Files, Languages, ListTree, Search, StickyNote, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Annotation, VocabularyEntry } from "@/app/types";
 import type { PdfDocument } from "@/app/[locale]/document/[id]/lib/pdf-document";
@@ -12,6 +12,7 @@ import {
 } from "@/app/[locale]/document/[id]/lib/sidebar-highlights";
 import { PageThumbnails } from "@/app/[locale]/document/[id]/components/document-reader/thumbnails/PageThumbnails";
 import { HighlightList } from "@/app/[locale]/document/[id]/components/document-reader/sidebar/HighlightList";
+import { GlossaryList } from "@/app/[locale]/document/[id]/components/document-reader/sidebar/GlossaryList";
 import { OutlineList } from "@/app/[locale]/document/[id]/components/document-reader/sidebar/OutlineList";
 import { useDocumentOutline } from "@/app/[locale]/document/[id]/hooks/useDocumentOutline";
 import { countOutlineEntries, type OutlineItem } from "@/app/[locale]/document/[id]/lib/pdf-outline";
@@ -20,13 +21,14 @@ import type { ReaderSearch } from "@/app/[locale]/document/[id]/hooks/useReaderS
 import type { TextSearchResult } from "@/app/[locale]/document/[id]/hooks/useDocumentTextSearch";
 import type { SemanticPassage } from "@/app/[locale]/document/[id]/hooks/useSemanticSearch";
 
-export const SIDEBAR_TABS = ["pages", "outline", "notes", "vocabulary", "search"] as const;
+export const SIDEBAR_TABS = ["pages", "outline", "notes", "vocabulary", "glossary", "search"] as const;
 export type SidebarTab = (typeof SIDEBAR_TABS)[number];
 // A single entry is usually just the document title, not worth a tab.
 const MIN_OUTLINE_ENTRIES = 2;
 
 interface ReaderSidebarProps {
   pdf: PdfDocument;
+  documentId: string;
   currentPage: number;
   onPageClick: (pageNumber: number) => void;
   // Set only in exam mode, where the sidebar is just pages to pick from.
@@ -71,6 +73,7 @@ const SidebarTabTrigger: React.FC<SidebarTabTriggerProps> = ({ value, icon: Icon
 // Everything for moving through the document: its pages, the user's notes and saved words.
 export const ReaderSidebar: React.FC<ReaderSidebarProps> = ({
   pdf,
+  documentId,
   currentPage,
   onPageClick,
   selectedPages,
@@ -118,6 +121,7 @@ export const ReaderSidebar: React.FC<ReaderSidebarProps> = ({
             {hasOutline && <SidebarTabTrigger value="outline" icon={ListTree} label={t("tabs.outline")} />}
             <SidebarTabTrigger value="notes" icon={StickyNote} label={t("tabs.notes")} count={noteItems.length} />
             <SidebarTabTrigger value="vocabulary" icon={Languages} label={t("tabs.vocabulary")} count={wordItems.length} />
+            <SidebarTabTrigger value="glossary" icon={BookA} label={t("tabs.glossary")} />
             <SidebarTabTrigger value="search" icon={Search} label={t("tabs.search")} />
           </TabsList>
           <TabsContent value="pages">{pages}</TabsContent>
@@ -134,6 +138,9 @@ export const ReaderSidebar: React.FC<ReaderSidebarProps> = ({
               <HighlightList kind="vocabulary" items={wordItems} currentPage={currentPage} onSelect={onWordSelect} />
             </div>
             {wordsAction}
+          </TabsContent>
+          <TabsContent value="glossary">
+            <GlossaryList documentId={documentId} onPageSelect={onPageClick} />
           </TabsContent>
           <TabsContent value="search">
             <SearchPanel

@@ -10,4 +10,10 @@ export const toExcerpt = (text: string): string => {
 
 // What a saved explanation looks like as a note: the term (if any), the core idea, then the rest.
 export const explanationToMarkdown = (explanation: Explanation, term: string | null): string =>
-  [term && `### ${term}`, `**${explanation.coreIdea}**`, explanation.explanation].filter(Boolean).join("\n\n");
+  [
+    term && `### ${term}${explanation.termTranslation ? ` (${explanation.termTranslation})` : ""}`,
+    `**${explanation.coreIdea}**`,
+    explanation.explanation,
+  ]
+    .filter(Boolean)
+    .join("\n\n");

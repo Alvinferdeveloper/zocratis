@@ -130,7 +130,14 @@ export const ExplainPanel: React.FC<ExplainPanelProps> = ({
 
       <div className="min-h-0 flex-1 overflow-y-auto scrollbar-thin" aria-live="polite" aria-busy={explain.isLoading}>
         <div className="flex flex-col gap-3 px-5 pb-4 pt-1">
-          {term && <h3 className="font-serif text-3xl italic leading-tight">{term}</h3>}
+          {term && (
+            <div>
+              <h3 className="font-serif text-3xl italic leading-tight">{term}</h3>
+              {explanation?.termTranslation && (
+                <p className="mt-0.5 text-sm text-muted-foreground">{explanation.termTranslation}</p>
+              )}
+            </div>
+          )}
 
           <div className="flex items-center justify-between gap-3">
             <span className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
@@ -175,12 +182,15 @@ export const ExplainPanel: React.FC<ExplainPanelProps> = ({
                     <span className="mr-0.5 text-xs text-muted-foreground">{t("keyTerms")}</span>
                     {explanation.keyTerms.map((keyTerm) => (
                       <button
-                        key={keyTerm}
+                        key={keyTerm.original}
                         type="button"
                         onClick={() => explain.openTerm(keyTerm)}
                         className="press-feedback h-7 rounded-full bg-primary/10 px-3 text-sm font-medium text-primary transition-colors duration-150 hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
                       >
-                        {keyTerm}
+                        {keyTerm.original}
+                        {keyTerm.translation && (
+                          <span className="ml-1 font-normal text-primary/70">· {keyTerm.translation}</span>
+                        )}
                       </button>
                     ))}
                   </div>

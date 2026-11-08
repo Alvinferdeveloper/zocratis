@@ -31,7 +31,8 @@
       "outline": "Contents",
       "notes": "Notes",
       "vocabulary": "Words",
-      "search": "Search"
+      "search": "Search",
+      "glossary": "Glossary"
     },
     "page": "Page {page}",
     "noResults": "Nothing matches your search.",
@@ -71,7 +72,13 @@
       "searching": "Searching…",
       "semanticEmpty": "No passages about that in the document."
     },
-    "fromRegion": "Saved from a figure, table or formula"
+    "fromRegion": "Saved from a figure, table or formula",
+    "glossary": {
+      "search": "Search the glossary",
+      "emptyTitle": "Your glossary is empty",
+      "emptyHint": "Every term you open while explaining a passage is kept here, with its core idea and where it's defined.",
+      "definedOn": "Defined on p. {page}"
+    }
   },
   "selectionPopup": {
     "chat": "Chat",
