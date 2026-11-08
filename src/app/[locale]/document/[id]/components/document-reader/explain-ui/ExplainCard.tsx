@@ -5,11 +5,14 @@ import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover"
 import { LiveAnchorTarget, useLiveAnchor } from "@/app/[locale]/document/[id]/hooks/useLiveAnchor";
 import { isScrollbarPointerDown } from "@/app/[locale]/document/[id]/lib/scrollbar";
 import type { ExplainSubject } from "@/app/[locale]/document/[id]/hooks/useExplanation";
+import type { SelectionRect } from "@/app/[locale]/document/[id]/hooks/useTextSelection";
 import { ExplainPanel, type ExplainPanelProps } from "./ExplainPanel";
 
 // A selected passage or a region of a page, with what the card anchors to.
 export interface ExplainSelection extends ExplainSubject {
   anchor: LiveAnchorTarget;
+  // A fresh text selection, to keep the passage on the page once it's explained.
+  selectionRects?: SelectionRect[];
 }
 
 interface ExplainCardProps extends Omit<ExplainPanelProps, "subject"> {

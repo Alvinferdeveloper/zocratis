@@ -87,8 +87,9 @@ export interface BoundingRect {
     pageNumber: number;
 }
 
-// A highlighted passage, or a chat reply or explained region saved against a page (no boundingRect, empty rects).
-export type AnnotationOrigin = 'selection' | 'chat' | 'region';
+// A highlighted passage; an explained passage kept on the page (highlighted, opens its explanation);
+// or a chat reply or explained region saved against a page (no boundingRect, empty rects).
+export type AnnotationOrigin = 'selection' | 'explanation' | 'chat' | 'region';
 
 export interface Annotation {
     id: string;

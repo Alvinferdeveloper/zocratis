@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ArrowUp, Check, Layers, MessageSquare, RefreshCw, StickyNote, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -46,6 +46,10 @@ export interface ExplainPanelProps {
   // A question about it starts a new chat conversation, where it can go as deep as needed.
   onAskMore: (followUp: ExplanationFollowUp) => void;
   onOpenConversation: (conversationId: string) => void;
+  // Fired once the passage or region itself has an explanation (not a term), to keep it on the page.
+  onExplained: () => void;
+  // A passage kept on the page turns into a note instead of saving a second one.
+  noteAction: "save" | "convert";
   onGoToPage: (page: number) => void;
 }
 
@@ -58,6 +62,8 @@ export const ExplainPanel: React.FC<ExplainPanelProps> = ({
   onSaveNote,
   onAskMore,
   onOpenConversation,
+  onExplained,
+  noteAction,
   onGoToPage,
 }) => {
   const t = useTranslations("reader.explain");
@@ -71,6 +77,13 @@ export const ExplainPanel: React.FC<ExplainPanelProps> = ({
   const [isSavingNote, setIsSavingNote] = useState(false);
   const [isCardOpen, setIsCardOpen] = useState(false);
   const [question, setQuestion] = useState("");
+
+  const hasReportedExplanation = useRef(false);
+  useEffect(() => {
+    if (!explanation || term || hasReportedExplanation.current) return;
+    hasReportedExplanation.current = true;
+    onExplained();
+  }, [explanation, term, onExplained]);
 
   const viewKey = `${term ?? ""}#${level}`;
   const isSaved = savedViews.has(viewKey);
@@ -253,7 +266,9 @@ export const ExplainPanel: React.FC<ExplainPanelProps> = ({
           </Button>
           <Button variant="ghost" size="sm" onClick={saveNote} disabled={!explanation || isSaved || isSavingNote}>
             {isSaved ? <Check /> : <StickyNote />}
-            {t(isSaved ? "noteSaved" : "saveNote")}
+            {noteAction === "convert"
+              ? t(isSaved ? "convertedToNote" : "convertToNote")
+              : t(isSaved ? "noteSaved" : "saveNote")}
           </Button>
           <Button variant="ghost" size="sm" onClick={() => setIsCardOpen(true)} disabled={!explanation || isCardOpen}>
             <Layers />

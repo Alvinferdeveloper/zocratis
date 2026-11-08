@@ -118,7 +118,9 @@
     "thinkAgain": "Pensar de nuevo",
     "askMore": "Pregunta algo más…",
     "askMoreSend": "Preguntar en un chat nuevo",
-    "openConversation": "Ver conversación: {title}"
+    "openConversation": "Ver conversación: {title}",
+    "convertToNote": "Convertir en nota",
+    "convertedToNote": "Convertida en nota"
   },
   "composer": {
     "send": "Enviar",

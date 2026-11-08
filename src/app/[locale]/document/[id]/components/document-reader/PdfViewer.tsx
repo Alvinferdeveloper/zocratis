@@ -35,6 +35,8 @@ const NO_REGIONS: DocumentRegion[] = [];
 export interface PdfHighlightItem {
     id: string;
     color: string;
+    // An explained passage: underlined in ink instead of filled with the note color.
+    variant?: "explanation";
     selectedText: string;
     pageNumber: number;
     boundingRect: BoundingRect;
@@ -141,11 +143,15 @@ const getClickedPart = (container: Element, x: number, y: number): Element => {
 
 const HighlightContainer = ({ onClick }: { onClick: (highlight: ViewportHighlight, anchor: Element) => void }) => {
     const { highlight, isScrolledTo } = useHighlightContainerContext();
-    const highlightWithColor = highlight as ViewportHighlight & { color?: string };
+    const highlightWithColor = highlight as ViewportHighlight & { color?: string; variant?: "explanation" };
+    const style =
+        highlightWithColor.variant === "explanation"
+            ? { background: "transparent", borderBottom: "1.5px dotted var(--primary)" }
+            : { background: highlightWithColor.color };
 
     return (
         <div onClick={(e) => onClick(highlight, getClickedPart(e.currentTarget, e.clientX, e.clientY))}>
-            <TextHighlight isScrolledTo={isScrolledTo} highlight={highlight} style={{ background: highlightWithColor.color }} />
+            <TextHighlight isScrolledTo={isScrolledTo} highlight={highlight} style={style} />
         </div>
     );
 };
@@ -293,6 +299,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
         return highlightItems.map((item) => ({
             id: item.id,
             color: item.color,
+            variant: item.variant,
             content: { text: item.selectedText },
             position: {
                 boundingRect: item.boundingRect,

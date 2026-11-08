@@ -80,6 +80,8 @@ interface UpdateAnnotationRequest {
     comment?: string;
     aiResponse?: string;
     color?: string;
+    // Only to turn an explanation into a note.
+    origin?: 'selection';
     boundingRect?: { x1: number; y1: number; x2: number; y2: number; width: number; height: number; pageNumber: number };
     rects?: { x1: number; y1: number; x2: number; y2: number; width: number; height: number; pageNumber: number }[];
 }

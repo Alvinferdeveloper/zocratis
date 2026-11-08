@@ -13,7 +13,8 @@ import { useAnnotationActions } from "@/app/[locale]/document/[id]/hooks/useAnno
 import { useVocabularyActions } from "@/app/[locale]/document/[id]/hooks/useVocabularyActions";
 import { useLanguageMode } from "@/app/[locale]/document/[id]/hooks/useLanguageMode";
 import { useDocumentRegions } from "@/app/[locale]/document/[id]/hooks/useDocumentRegions";
-import { useCreateAnnotation } from "@/app/[locale]/document/[id]/hooks/useAnnotations";
+import { useCreateAnnotation, useUpdateAnnotation } from "@/app/[locale]/document/[id]/hooks/useAnnotations";
+import { toAnnotationGeometry } from "@/app/[locale]/document/[id]/lib/annotation-geometry";
 import { useQuickTranslate } from "@/app/[locale]/document/[id]/hooks/useQuickTranslate";
 import { useDocumentLanguages } from "@/app/[locale]/document/[id]/hooks/useDocumentLanguages";
 import { LiveAnchorTarget } from "@/app/[locale]/document/[id]/hooks/useLiveAnchor";
@@ -236,6 +237,7 @@ export const DocumentReader: React.FC<DocumentReaderProps> = ({ document, reques
             text: selectedText,
             pageNumber: selectedPage,
             anchor: getSelectionAnchor(fallbackAnchor),
+            selectionRects,
         });
     };
 
@@ -276,10 +278,39 @@ export const DocumentReader: React.FC<DocumentReaderProps> = ({ document, reques
         [pdfDoc]
     );
 
-    // Region notes hang off the page: there is no passage to highlight.
+    // An explained passage stays on the page: its mark reopens the explanation (and can become a note).
+    const findExplanationMark = (subject: { text: string; pageNumber: number }) =>
+        annotations.find(
+            (annotation) =>
+                annotation.origin === "explanation" &&
+                annotation.pageNumber === subject.pageNumber &&
+                annotation.selectedText === subject.text
+        );
+    const explanationMark = explainSelection && !explainSelection.image ? findExplanationMark(explainSelection) : undefined;
+
     const { mutateAsync: createAnnotation } = useCreateAnnotation(document.id);
+    const { mutateAsync: updateAnnotation } = useUpdateAnnotation(document.id);
+
+    const handleExplained = () => {
+        const selection = explainSelection;
+        if (!selection?.selectionRects?.length || findExplanationMark(selection)) return;
+        createAnnotation({
+            selectedText: selection.text,
+            color: DEFAULT_NOTE_COLOR,
+            pageNumber: selection.pageNumber,
+            origin: "explanation",
+            ...toAnnotationGeometry(selection.selectionRects, selection.pageNumber),
+        }).catch((error) => console.error("Failed to keep the explanation on the page", error));
+    };
+
+    // Region notes hang off the page: there is no passage to highlight.
     const handleExplanationNote = (markdown: string, title: string) =>
-        explainSelection?.image
+        explanationMark
+            ? updateAnnotation({
+                  annotationId: explanationMark.id,
+                  update: { origin: "selection", aiResponse: markdown, color: DEFAULT_NOTE_COLOR },
+              })
+            : explainSelection?.image
             ? createAnnotation({
                   selectedText: title,
                   aiResponse: markdown,
@@ -350,6 +381,9 @@ export const DocumentReader: React.FC<DocumentReaderProps> = ({ document, reques
         clearSelection();
     };
 
+    // Explanations kept on the page aren't notes: they stay out of the Notes tab.
+    const sidebarNotes = useMemo(() => annotations.filter((annotation) => annotation.origin !== "explanation"), [annotations]);
+
     const activeHighlights: PdfHighlightItem[] = languageMode.enabled
         ? vocabularyEntries.map((entry) => ({
               id: entry.id,
@@ -364,6 +398,7 @@ export const DocumentReader: React.FC<DocumentReaderProps> = ({ document, reques
               .map((annotation) => ({
                   id: annotation.id,
                   color: annotation.color,
+                  variant: annotation.origin === "explanation" ? ("explanation" as const) : undefined,
                   selectedText: annotation.selectedText,
                   pageNumber: annotation.pageNumber,
                   boundingRect: annotation.boundingRect,
@@ -376,7 +411,16 @@ export const DocumentReader: React.FC<DocumentReaderProps> = ({ document, reques
             if (entry) handleVocabularyEntryClick(entry, anchor);
         } else {
             const annotation = annotations.find((a) => a.id === id);
-            if (annotation) handleAnnotationClick(annotation);
+            if (annotation?.origin === "explanation") {
+                openExplanation({
+                    id: `${annotation.pageNumber}:${annotation.selectedText}`,
+                    text: annotation.selectedText,
+                    pageNumber: annotation.pageNumber,
+                    anchor,
+                });
+            } else if (annotation) {
+                handleAnnotationClick(annotation);
+            }
         }
     };
 
@@ -434,7 +478,7 @@ export const DocumentReader: React.FC<DocumentReaderProps> = ({ document, reques
                                 onPageClick={handleThumbnailClick}
                                 selectedPages={exam.enabled ? exam.selectedPages : undefined}
                                 compact={isChatOpen || exam.enabled}
-                                notes={annotations}
+                                notes={sidebarNotes}
                                 words={vocabularyEntries}
                                 wordsAction={<AddWordsToDeckButton documentId={document.id} className="mx-2 mb-2 justify-start" />}
                                 onNoteSelect={handleNoteSelect}
@@ -593,6 +637,8 @@ export const DocumentReader: React.FC<DocumentReaderProps> = ({ document, reques
                 onSaveNote={handleExplanationNote}
                 onAskMore={handleAskMore}
                 onOpenConversation={handleOpenFollowUp}
+                onExplained={handleExplained}
+                noteAction={explanationMark ? "convert" : "save"}
                 onGoToPage={(page) => navigationRef.current?.goToPage(page)}
             />
 
