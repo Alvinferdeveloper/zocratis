@@ -4,6 +4,7 @@ import type { Annotation, ChatSource } from "@/app/types";
 import { cn } from "@/lib/utils";
 import type { UseChatNotesReturn } from "@/app/[locale]/document/[id]/hooks/useChatNotes";
 import { getChatReply } from "@/app/[locale]/document/[id]/lib/chat-note";
+import type { PageRegion } from "@/app/[locale]/document/[id]/lib/region-image";
 import { useStickToBottom } from "@/app/[locale]/document/[id]/hooks/useStickToBottom";
 import { type ChatUIMessage, getMessageText } from "@/app/[locale]/document/[id]/lib/chat-message";
 import { AssistantMessage, AssistantMarkState } from "./AssistantMessage";
@@ -25,6 +26,7 @@ interface ChatMessageListProps {
   onSourceSelect: (source: ChatSource) => void;
   chatNotes: UseChatNotesReturn;
   onNoteOpen: (note: Annotation) => void;
+  onRegionSelect: (region: PageRegion) => void;
 }
 
 export const ChatMessageList: React.FC<ChatMessageListProps> = ({
@@ -38,6 +40,7 @@ export const ChatMessageList: React.FC<ChatMessageListProps> = ({
   onSourceSelect,
   chatNotes,
   onNoteOpen,
+  onRegionSelect,
 }) => {
   const { scrollRef, contentRef, scrollToBottom } = useStickToBottom();
   const lastMessage = messages.at(-1);
@@ -86,7 +89,12 @@ export const ChatMessageList: React.FC<ChatMessageListProps> = ({
     return messages.map((message, index) => {
       const text = getMessageText(message);
       return message.role === "user" ? (
-        <UserMessage key={message.id} text={text} />
+        <UserMessage
+          key={message.id}
+          text={text}
+          region={message.metadata?.region}
+          onRegionSelect={onRegionSelect}
+        />
       ) : (
         <AssistantMessage
           key={message.id}

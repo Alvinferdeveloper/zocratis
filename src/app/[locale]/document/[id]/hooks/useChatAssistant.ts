@@ -4,7 +4,7 @@ import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type ChatStatus } from "ai";
 import { Message } from "@/app/types";
 import { useFetchMessages } from "@/app/[locale]/document/[id]/hooks/useFetchMessages";
-import { type ChatUIMessage, getMessageText } from "@/app/[locale]/document/[id]/lib/chat-message";
+import { type ChatFollowUp, type ChatUIMessage, getMessageText } from "@/app/[locale]/document/[id]/lib/chat-message";
 import { apiUrl } from "@/lib/api-client";
 import { useRefreshUsage } from "@/app/[locale]/subscription/hooks/useSubscription";
 
@@ -18,7 +18,7 @@ export interface UseChatAssistantReturn {
   status: ChatStatus;
   error: Error | undefined;
   isLoadingHistory: boolean;
-  send: (text: string) => void;
+  send: (text: string, followUp?: ChatFollowUp) => void;
   retry: () => void;
   stop: () => void;
 }
@@ -29,7 +29,7 @@ const DRAFT_CHAT_ID = "draft";
 const toUIMessage = (message: Message): ChatUIMessage => ({
   id: message.id,
   role: message.role,
-  metadata: { sources: message.sources ?? [] },
+  metadata: { sources: message.sources ?? [], region: message.region ?? undefined },
   parts: [{ type: "text", text: message.content }],
 });
 
@@ -47,8 +47,9 @@ export const useChatAssistant = ({
         api: apiUrl("/ai/chat"),
         credentials: "include",
         // The server keeps the history; send only the message to answer (on retry, the same one again).
-        prepareSendMessagesRequest: ({ messages }) => ({
-          body: { conversationId, message: getMessageText(messages[messages.length - 1]) },
+        // A follow-up's image and explanation ride along with that one message (a retry goes without).
+        prepareSendMessagesRequest: ({ messages, body }) => ({
+          body: { ...body, conversationId, message: getMessageText(messages[messages.length - 1]) },
         }),
       }),
     [conversationId]
@@ -74,9 +75,12 @@ export const useChatAssistant = ({
   }, [conversationId, history.data, messages.length, setMessages]);
 
   const send = useCallback(
-    (text: string) => {
+    (text: string, followUp?: ChatFollowUp) => {
       if (!conversationId) return;
-      sendMessage({ text });
+      sendMessage(
+        { text, metadata: followUp?.region ? { region: followUp.region } : undefined },
+        followUp ? { body: { ...followUp } } : undefined
+      );
     },
     [conversationId, sendMessage]
   );

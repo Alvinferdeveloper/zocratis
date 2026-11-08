@@ -18,7 +18,6 @@ const ERROR_CODE_KEYS: Record<string, ApiErrorKey> = {
   DOCUMENT_FILE_UNAVAILABLE: "documentFileUnavailable",
   DOCUMENT_NO_READABLE_TEXT: "documentNoReadableText",
   VECTORIZATION_FAILED: "vectorizationFailed",
-  IMAGE_EXTRACTION_FAILED: "imageExtractionFailed",
   FOLDER_NOT_FOUND: "folderNotFound",
   TOPIC_NOT_FOUND: "topicNotFound",
   CONVERSATION_NOT_FOUND: "conversationNotFound",

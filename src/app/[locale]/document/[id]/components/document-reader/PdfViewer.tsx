@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef, useMemo, useCallback, useEffect, useImperativeHandle } from "react";
+import { useRef, useMemo, useCallback, useEffect, useImperativeHandle, useState } from "react";
+import { useTranslations } from "next-intl";
 import { PdfLoader, PdfHighlighter, TextHighlight, useHighlightContainerContext, ViewportHighlight } from "react-pdf-highlighter-extended";
 import "react-pdf-highlighter-extended/dist/esm/style/PdfHighlighter.css";
 import "react-pdf-highlighter-extended/dist/esm/style/pdf_viewer.css";
@@ -9,6 +10,8 @@ import { usePdfPageOverlay } from "../../hooks/usePdfPageOverlay";
 import { PdfSkeleton } from "./PdfSkeleton";
 import type { PdfDocument } from "@/app/[locale]/document/[id]/lib/pdf-document";
 import type { PageRegion } from "@/app/[locale]/document/[id]/lib/region-image";
+import { createRegionAnchor, type DocumentRegion, flashRegion, toPageRegion } from "@/app/[locale]/document/[id]/lib/page-regions";
+import { type PdfViewerHandle, useRegionOverlays } from "@/app/[locale]/document/[id]/hooks/useRegionOverlays";
 import type { PdfDestination } from "@/app/[locale]/document/[id]/lib/pdf-outline";
 import { clearSearchHighlight, findTextLayerRange, showSearchHighlight } from "@/app/[locale]/document/[id]/lib/text-layer-highlight";
 
@@ -21,7 +24,11 @@ export interface PdfNavigation {
     // Jumps to the page and highlights the nth match of the text there (exact search, semantic passages).
     showTextMatch: (pageNumber: number, query: string, occurrence: number) => void;
     clearTextMatch: () => void;
+    // Scrolls to a region of a page and flashes it (the figure a chat message was about).
+    showRegion: (region: PageRegion) => void;
 }
+
+const NO_REGIONS: DocumentRegion[] = [];
 
 export interface PdfHighlightItem {
     id: string;
@@ -47,7 +54,11 @@ interface PdfViewerProps {
     onPdfLoad?: (pdfDoc: PdfDocument) => void;
     navigationRef?: React.Ref<PdfNavigation>;
     regionMode?: boolean;
-    onRegionSelection?: (region: PageRegion) => void;
+    // The anchor is an invisible box over the region for the explanation card; null if the page is gone.
+    onRegionSelection?: (region: PageRegion, anchor: HTMLElement | null) => void;
+    // Regions the parser found, highlighted on hover with an "Explain" button.
+    regions?: DocumentRegion[];
+    onRegionExplain?: (region: DocumentRegion, anchor: HTMLElement | null) => void;
     viewportRef?: React.Ref<HTMLDivElement>;
     // Page to open on once pdf.js has laid out the pages; onReady fires after that, or right away without one.
     initialPage?: number;
@@ -152,6 +163,8 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
     navigationRef,
     regionMode = false,
     onRegionSelection,
+    regions = NO_REGIONS,
+    onRegionExplain,
     viewportRef,
     initialPage,
     onReady,
@@ -170,6 +183,29 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
         onPageSelect,
     });
 
+    // The pdf.js viewer as state, so the region overlays draw once it exists.
+    const [viewer, setViewer] = useState<PdfViewerHandle | null>(null);
+    const tRegions = useTranslations("reader.regions");
+    const regionAriaLabels = useMemo(
+        () => ({
+            table: tRegions("explainTable"),
+            image: tRegions("explainImage"),
+            figure: tRegions("explainFigure"),
+            formula: tRegions("explainFormula"),
+        }),
+        [tRegions]
+    );
+    useRegionOverlays({
+        viewer,
+        regions,
+        enabled: !examMode && Boolean(onRegionExplain),
+        label: tRegions("explain"),
+        ariaLabels: regionAriaLabels,
+        // Overlays are redrawn too often to anchor to, so the card gets its own box.
+        onExplain: (region) =>
+            onRegionExplain?.(region, viewer ? createRegionAnchor(viewer.container, toPageRegion(region)) : null),
+    });
+
     useEffect(() => {
         onPageChangeRef.current = onPageChange;
         onReadyRef.current = onReady;
@@ -182,6 +218,12 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
             viewer.scrollPageIntoView({ pageNumber, destArray: destination });
             // pdf.js puts the destination at the very top, under the floating controls.
             if (destination) viewer.container.scrollTop -= MIN_TOP_CLEARANCE;
+        },
+        showRegion: (region) => {
+            const viewer = utilsRef.current?.getViewer();
+            if (!viewer) return;
+            viewer.scrollPageIntoView({ pageNumber: region.pageNumber });
+            flashRegion(viewer, region);
         },
         scrollToHighlight: (id) => {
             const highlight = highlightsRef.current.find((item) => item.id === id);
@@ -262,13 +304,15 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
             // In fractions of the page: the region is redrawn from the PDF, whatever the zoom.
             const { x1, y1, x2, y2, width, height, pageNumber } = position.boundingRect;
             if (onRegionSelection && width > 0 && height > 0 && x2 > x1 && y2 > y1) {
-                onRegionSelection({
+                const region = {
                     pageNumber,
                     left: x1 / width,
                     top: y1 / height,
                     width: (x2 - x1) / width,
                     height: (y2 - y1) / height,
-                });
+                };
+                const container = utilsRef.current?.getViewer()?.container;
+                onRegionSelection(region, container ? createRegionAnchor(container, region) : null);
             }
             return;
         }
@@ -319,6 +363,8 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
                                 utilsRef.current = utils;
                                 setUtils(utils);
                                 const viewer = utils?.getViewer();
+                                // Called while the library renders: the state update waits until it ends.
+                                if (viewer) queueMicrotask(() => setViewer((current) => current ?? viewer));
                                 if (viewer?.eventBus && !eventBusAttachedRef.current) {
                                     eventBusAttachedRef.current = true;
                                     viewer.eventBus.on("pagechanging", (evt: { pageNumber: number }) => {

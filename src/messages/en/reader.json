@@ -70,7 +70,8 @@
       "indexing": "Getting search by meaning ready… This only happens the first time and can take a few seconds.",
       "searching": "Searching…",
       "semanticEmpty": "No passages about that in the document."
-    }
+    },
+    "fromRegion": "Saved from a figure, table or formula"
   },
   "selectionPopup": {
     "chat": "Chat",
@@ -86,7 +87,6 @@
     "keyTerms": "Key terms",
     "definedOn": "The document defines it on p. {page} →",
     "simplify": "I don't get it",
-    "continueInChat": "Continue in the chat",
     "saveNote": "Save note",
     "noteSaved": "Note saved",
     "card": "Card",
@@ -105,16 +105,12 @@
       "failed": "Not quite",
       "passedDone": "Good. Keep reading.",
       "failedDone": "Added to your review."
-    }
-  },
-  "visualQuery": {
-    "title": "Ask about an image or formula",
-    "description": "Ask a question about the image or formula selected in the document.",
-    "previewAlt": "Selected region of the document",
-    "defaultQuestion": "What does this mean?",
-    "ask": "Ask",
-    "analyzing": "Analyzing...",
-    "generating": "Generating explanation..."
+    },
+    "regionLabel": "{kind, select, table {Table} formula {Formula} image {Image} figure {Figure} other {Crop}} · p. {page}",
+    "cardFrontRegion": "{kind, select, table {What does the table} formula {What does the formula} image {What does the image} figure {What does the figure} other {What does the crop}} on p. {page} show?",
+    "thinkAgain": "Think again",
+    "askMore": "Ask something more…",
+    "askMoreSend": "Ask in a new chat"
   },
   "composer": {
     "send": "Send",
@@ -128,5 +124,12 @@
   "resume": {
     "notice": "Picked up on page {page}",
     "startOver": "Back to the start"
+  },
+  "regions": {
+    "explain": "Explain",
+    "explainTable": "Explain this table",
+    "explainImage": "Explain this image",
+    "explainFigure": "Explain this figure",
+    "explainFormula": "Explain this formula"
   }
 }

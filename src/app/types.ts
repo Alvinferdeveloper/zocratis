@@ -53,6 +53,8 @@ export interface Message {
     role: 'user' | 'assistant';
     content: string;
     sources: ChatSource[] | null;
+    // Fractions of the page a follow-up question was about; the reader redraws it.
+    region: { pageNumber: number; left: number; top: number; width: number; height: number } | null;
     createdAt: string;
 }
 
@@ -85,8 +87,8 @@ export interface BoundingRect {
     pageNumber: number;
 }
 
-// A highlighted passage, or a chat reply saved against a page (no boundingRect, empty rects).
-export type AnnotationOrigin = 'selection' | 'chat';
+// A highlighted passage, or a chat reply or explained region saved against a page (no boundingRect, empty rects).
+export type AnnotationOrigin = 'selection' | 'chat' | 'region';
 
 export interface Annotation {
     id: string;

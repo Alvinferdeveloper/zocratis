@@ -56,5 +56,6 @@
       "description": "All of its messages will be deleted. This action can't be undone.",
       "confirm": "Delete"
     }
-  }
+  },
+  "showInDocument": "Show in the document"
 }

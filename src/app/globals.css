@@ -339,6 +339,77 @@
   100% { box-shadow: 0 0 0 2px transparent; }
 }
 
+/* Regions the parser found (tables, figures, formulas), created by useRegionOverlays. They never take
+   the pointer, so text inside them stays selectable; only their "Explain" button does. */
+.region-overlay {
+  position: absolute;
+  z-index: 20;
+  pointer-events: none;
+  border-radius: 6px;
+  box-shadow: inset 0 0 0 1.5px transparent;
+  transition: box-shadow 150ms var(--ease-out);
+}
+
+.region-overlay[data-active="true"],
+.region-overlay:has(:focus-visible) {
+  box-shadow: inset 0 0 0 1.5px color-mix(in oklch, var(--primary) 55%, transparent);
+}
+
+/* Above the top-right corner, so it fits even a one-line formula. */
+.region-overlay__action {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 9999px;
+  background-color: var(--card);
+  color: var(--primary);
+  font: 500 12px/1 var(--font-sans);
+  white-space: nowrap;
+  box-shadow: var(--shadow-float);
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(calc(-100% - 4px));
+  transition: opacity 150ms var(--ease-out);
+}
+
+.region-overlay__action svg {
+  width: 14px;
+  height: 14px;
+}
+
+.region-overlay[data-active="true"] .region-overlay__action,
+.region-overlay__action:focus-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.region-overlay__action:focus-visible {
+  outline: 2px solid color-mix(in oklch, var(--primary) 30%, transparent);
+  outline-offset: 2px;
+}
+
+/* A region the reader jumped to (from a chat message): the same fading outline as a note. */
+.region-flash {
+  position: absolute;
+  z-index: 25;
+  pointer-events: none;
+  border-radius: 6px;
+  animation: highlight-flash 1.4s var(--ease-out) forwards;
+}
+
+/* Invisible box over a region for the explanation card to anchor to (createRegionAnchor). */
+.region-anchor {
+  position: absolute;
+  pointer-events: none;
+}
+
 /* Exam mode marks on the PDF pages, created by usePdfPageOverlay; same look as the selected thumbnails */
 .exam-page-overlay {
   position: absolute;

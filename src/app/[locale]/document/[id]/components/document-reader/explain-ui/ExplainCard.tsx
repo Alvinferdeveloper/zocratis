@@ -4,11 +4,11 @@ import { useTranslations } from "next-intl";
 import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
 import { LiveAnchorTarget, useLiveAnchor } from "@/app/[locale]/document/[id]/hooks/useLiveAnchor";
 import { isScrollbarPointerDown } from "@/app/[locale]/document/[id]/lib/scrollbar";
+import type { ExplainSubject } from "@/app/[locale]/document/[id]/hooks/useExplanation";
 import { ExplainPanel, type ExplainPanelProps } from "./ExplainPanel";
 
-export interface ExplainSelection {
-  text: string;
-  pageNumber: number;
+// A selected passage or a region of a page, with what the card anchors to.
+export interface ExplainSelection extends ExplainSubject {
   anchor: LiveAnchorTarget;
 }
 
@@ -18,7 +18,7 @@ interface ExplainCardProps extends Omit<ExplainPanelProps, "subject"> {
   portalContainer?: HTMLElement | null;
 }
 
-// The explanation of a selected passage, anchored to it like the vocabulary card.
+// The explanation of a selected passage or region, anchored to it like the vocabulary card.
 export const ExplainCard: React.FC<ExplainCardProps> = ({ selection, portalContainer, onClose, ...panelProps }) => {
   const t = useTranslations("reader.explain");
   const { virtualRef, boundary } = useLiveAnchor(selection?.anchor ?? null, onClose);
@@ -47,12 +47,7 @@ export const ExplainCard: React.FC<ExplainCardProps> = ({ selection, portalConta
       >
         {selection && (
           // A new selection starts a fresh trail and levels.
-          <ExplainPanel
-            key={`${selection.pageNumber}:${selection.text}`}
-            subject={{ text: selection.text, pageNumber: selection.pageNumber }}
-            onClose={onClose}
-            {...panelProps}
-          />
+          <ExplainPanel key={selection.id} subject={selection} onClose={onClose} {...panelProps} />
         )}
       </PopoverContent>
     </Popover>

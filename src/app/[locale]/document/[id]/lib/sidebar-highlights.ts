@@ -1,4 +1,4 @@
-import type { Annotation, VocabularyEntry } from "@/app/types";
+import type { Annotation, AnnotationOrigin, VocabularyEntry } from "@/app/types";
 
 // What the reader sidebar lists for a note or a saved word.
 export interface SidebarHighlight {
@@ -7,7 +7,8 @@ export interface SidebarHighlight {
   color: string;
   title: string;
   detail?: string;
-  fromChat?: boolean;
+  // Notes only: where a note without a highlight came from.
+  origin?: AnnotationOrigin;
 }
 
 // Notes are Markdown; the sidebar previews them as plain text.
@@ -26,7 +27,7 @@ export const noteToSidebarHighlight = (note: Annotation): SidebarHighlight => ({
   color: note.color,
   title: note.selectedText,
   detail: note.comment || (note.aiResponse ? toPlainText(note.aiResponse) : undefined),
-  fromChat: note.origin === "chat",
+  origin: note.origin,
 });
 
 export const wordToSidebarHighlight = (entry: VocabularyEntry): SidebarHighlight => ({

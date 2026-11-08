@@ -14,7 +14,6 @@
   "documentFileUnavailable": "This document's file isn't available.",
   "documentNoReadableText": "We couldn't find readable text in this PDF.",
   "vectorizationFailed": "The document couldn't be prepared for search.",
-  "imageExtractionFailed": "The image couldn't be read from the document.",
   "folderNotFound": "We couldn't find this folder.",
   "topicNotFound": "We couldn't find this topic.",
   "conversationNotFound": "We couldn't find this conversation.",

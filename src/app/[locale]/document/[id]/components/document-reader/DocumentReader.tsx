@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Group, Panel } from "react-resizable-panels";
 import { useDocumentViewer } from "@/app/[locale]/document/[id]/hooks/useDocumentViewer";
 import { useExamMode } from "@/app/[locale]/document/[id]/hooks/useExamMode";
@@ -12,11 +12,18 @@ import { useChatNotes } from "@/app/[locale]/document/[id]/hooks/useChatNotes";
 import { useAnnotationActions } from "@/app/[locale]/document/[id]/hooks/useAnnotationActions";
 import { useVocabularyActions } from "@/app/[locale]/document/[id]/hooks/useVocabularyActions";
 import { useLanguageMode } from "@/app/[locale]/document/[id]/hooks/useLanguageMode";
-import { useVisualQuery } from "@/app/[locale]/document/[id]/hooks/useVisualQuery";
+import { useDocumentRegions } from "@/app/[locale]/document/[id]/hooks/useDocumentRegions";
+import { useCreateAnnotation } from "@/app/[locale]/document/[id]/hooks/useAnnotations";
 import { useQuickTranslate } from "@/app/[locale]/document/[id]/hooks/useQuickTranslate";
 import { useDocumentLanguages } from "@/app/[locale]/document/[id]/hooks/useDocumentLanguages";
 import { LiveAnchorTarget } from "@/app/[locale]/document/[id]/hooks/useLiveAnchor";
 import { captureRegion, type PageRegion } from "@/app/[locale]/document/[id]/lib/region-image";
+import {
+    type DocumentRegion,
+    type RegionKind,
+    releaseRegionAnchor,
+    toPageRegion,
+} from "@/app/[locale]/document/[id]/lib/page-regions";
 import { getSelectionAnchor } from "@/app/[locale]/document/[id]/lib/selection-anchor";
 import { ResizeHandle } from "@/components/ui/resize-handle";
 
@@ -40,9 +47,13 @@ import { SelectionPopup } from "@/app/[locale]/document/[id]/components/document
 import { QuickTranslateBubble } from "@/app/[locale]/document/[id]/components/document-reader/QuickTranslateBubble";
 import { NoteDialog } from "@/app/[locale]/document/[id]/components/document-reader/note-ui";
 import { VocabularyCard } from "@/app/[locale]/document/[id]/components/document-reader/language-ui";
-import { ExplainCard, type ExplainSelection } from "@/app/[locale]/document/[id]/components/document-reader/explain-ui";
+import {
+    ExplainCard,
+    type ExplainSelection,
+    type ExplanationFollowUp,
+} from "@/app/[locale]/document/[id]/components/document-reader/explain-ui";
+import { RegionRendererContext } from "@/app/[locale]/document/[id]/components/document-reader/chat/RegionAttachment";
 import { DEFAULT_NOTE_COLOR } from "@/app/[locale]/document/[id]/lib/note-colors";
-import { VisualQueryPanel } from "@/app/[locale]/document/[id]/components/document-reader/VisualQueryPanel";
 import { DocumentFile } from "@/app/[locale]/document/[id]/page";
 import { Annotation, BoundingRect, VocabularyEntry } from "@/app/types";
 import { getApiErrorKey } from "@/lib/api-errors";
@@ -190,8 +201,8 @@ export const DocumentReader: React.FC<DocumentReaderProps> = ({ document, reques
 
     const chatNotes = useChatNotes(document.id, currentPage);
 
-    // A chat note has no highlight to scroll to: go to its page and open it. The list has the latest edits.
-    const openChatNote = (note: Annotation) => {
+    // Chat and region notes have no highlight to scroll to: go to their page and open them. The list has the latest edits.
+    const openPageNote = (note: Annotation) => {
         navigationRef.current?.goToPage(note.pageNumber);
         handleAnnotationClick(annotations.find((annotation) => annotation.id === note.id) ?? note);
     };
@@ -209,29 +220,70 @@ export const DocumentReader: React.FC<DocumentReaderProps> = ({ document, reques
         clearSelection();
     }, [clearSelection]);
 
-    // Like the card, the explanation keeps its own copy of the selection while the student explores it.
+    // What the floating card explains: a selected passage, a detected region or a crop, with its anchor.
     const [explainSelection, setExplainSelection] = useState<ExplainSelection | null>(null);
+
+    const openExplanation = (selection: ExplainSelection) => {
+        releaseRegionAnchor(explainSelection?.anchor);
+        setExplainSelection(selection);
+    };
 
     const handleExplainPassageClick = (fallbackAnchor: Element) => {
         if (!selectedText) return;
-        setExplainSelection({ text: selectedText, pageNumber: selectedPage, anchor: getSelectionAnchor(fallbackAnchor) });
+        openExplanation({
+            id: `${selectedPage}:${selectedText}`,
+            text: selectedText,
+            pageNumber: selectedPage,
+            anchor: getSelectionAnchor(fallbackAnchor),
+        });
     };
 
-    const handleExplainCardClose = useCallback(() => {
+    const handleExplainCardClose = () => {
+        releaseRegionAnchor(explainSelection?.anchor);
         setExplainSelection(null);
         clearSelection();
-    }, [clearSelection]);
-
-    // The card reviews the explanation's suggestion before it is saved, anchored where the explanation was.
-    const handleExplanationCard = (card: { front: string; back: string }) => {
-        if (!explainSelection) return;
-        setCardSelection({ ...explainSelection, suggestion: card });
-        setExplainSelection(null);
     };
 
-    const handleExplanationToChat = () => {
-        if (!explainSelection) return;
-        chat.attachContext({ text: explainSelection.text, page: explainSelection.pageNumber });
+    // Detected regions and hand-made crops are explained from the region redrawn as an image.
+    const explainRegion = async (region: PageRegion, anchor: HTMLElement | null, id: string, regionKind?: RegionKind) => {
+        if (!pdfDoc || !anchor) return;
+        try {
+            const { image, text } = await captureRegion(pdfDoc, region);
+            openExplanation({ id, text, pageNumber: region.pageNumber, image, regionKind, region, anchor });
+        } catch (error) {
+            releaseRegionAnchor(anchor);
+            console.error("Failed to capture the region", error);
+        }
+    };
+
+    const { data: regionsData } = useDocumentRegions(document.id);
+    const handleRegionExplain = (region: DocumentRegion, anchor: HTMLElement | null) =>
+        explainRegion(toPageRegion(region), anchor, `region:${region.id}`, region.kind);
+    const handleRegionSelection = (region: PageRegion, anchor: HTMLElement | null) =>
+        explainRegion(region, anchor, `crop:${region.pageNumber}:${region.left}:${region.top}:${region.width}:${region.height}`);
+
+    // Chat messages that followed a region show it again, redrawn from the PDF.
+    const renderRegion = useMemo(
+        () => (pdfDoc ? async (region: PageRegion) => (await captureRegion(pdfDoc, region)).image : null),
+        [pdfDoc]
+    );
+
+    // Region notes hang off the page: there is no passage to highlight.
+    const { mutateAsync: createAnnotation } = useCreateAnnotation(document.id);
+    const handleExplanationNote = (markdown: string, title: string) =>
+        explainSelection?.image
+            ? createAnnotation({
+                  selectedText: title,
+                  aiResponse: markdown,
+                  color: DEFAULT_NOTE_COLOR,
+                  pageNumber: explainSelection.pageNumber,
+                  origin: "region",
+              })
+            : handleSaveNote({ selectedText: title, comment: "", aiResponse: markdown, color: DEFAULT_NOTE_COLOR }, null);
+
+    // Asking more starts a new conversation with the region (or passage) and the explanation attached.
+    const handleAskMore = ({ question, quote, pageNumber, image, region, explanation }: ExplanationFollowUp) => {
+        chat.askInNewConversation(question, { text: quote, page: pageNumber, followUp: { image, region, explanation } });
         setIsChatOpen(true);
         handleExplainCardClose();
     };
@@ -322,7 +374,7 @@ export const DocumentReader: React.FC<DocumentReaderProps> = ({ document, reques
 
     const handleNoteSelect = (item: SidebarHighlight) => {
         const note = annotations.find((annotation) => annotation.id === item.id);
-        if (note?.origin === "chat") openChatNote(note);
+        if (note && note.boundingRect === null) openPageNote(note);
         else jumpToHighlight(item.id, false);
     };
 
@@ -332,47 +384,9 @@ export const DocumentReader: React.FC<DocumentReaderProps> = ({ document, reques
         }
     }, [pendingHighlightId, activeHighlights]);
 
-    // ─── Visual query (images/formulas on-demand) ──────────────────────
+    // Region mode: dragging crops a region of the page to explain.
     const [regionMode, setRegionMode] = useState(false);
-    const [isVisualQueryOpen, setIsVisualQueryOpen] = useState(false);
-    const [pendingRegion, setPendingRegion] = useState<{
-        pageNumber: number;
-        imageBase64: string;
-        text: string;
-    } | null>(null);
-
-    const visualQuery = useVisualQuery(document.id);
-
     const handleToggleRegionMode = () => setRegionMode((prev) => !prev);
-
-    // The AI gets exactly what was cropped, redrawn sharp from the PDF, plus any text inside it.
-    const handleRegionSelection = async (region: PageRegion) => {
-        if (!pdfDoc) return;
-        try {
-            const { image, text } = await captureRegion(pdfDoc, region);
-            setPendingRegion({ pageNumber: region.pageNumber, imageBase64: image, text });
-            setIsVisualQueryOpen(true);
-            visualQuery.reset();
-        } catch (error) {
-            console.error("Failed to capture the selected region", error);
-        }
-    };
-
-    const handleAskVisualQuery = (question: string) => {
-        if (!pendingRegion) return;
-        visualQuery.mutate({
-            question,
-            pageNumber: pendingRegion.pageNumber,
-            imageBase64: pendingRegion.imageBase64,
-            regionText: pendingRegion.text || undefined,
-        });
-    };
-
-    const handleVisualQueryClose = () => {
-        setIsVisualQueryOpen(false);
-        setPendingRegion(null);
-        visualQuery.reset();
-    };
 
     return (
         <div className="h-screen bg-background flex flex-col">
@@ -440,6 +454,8 @@ export const DocumentReader: React.FC<DocumentReaderProps> = ({ document, reques
                                 onHighlightClick={handleHighlightClick}
                                 regionMode={regionMode}
                                 onRegionSelection={handleRegionSelection}
+                                regions={regionsData?.regions}
+                                onRegionExplain={handleRegionExplain}
                                 viewportRef={setReaderViewport}
                                 selectionTip={
                                     <div>
@@ -495,13 +511,16 @@ export const DocumentReader: React.FC<DocumentReaderProps> = ({ document, reques
                             <ResizeHandle />
                             <Panel defaultSize="34" minSize="24" maxSize="50">
                                 <div className="h-full animate-in fade-in slide-in-from-right-4 duration-200 ease-[var(--ease-out)]">
-                                    <ChatPanel
-                                        session={chat}
-                                        onClose={() => setIsChatOpen(false)}
-                                        onSourceSelect={handlePassageSelect}
-                                        chatNotes={chatNotes}
-                                        onNoteOpen={openChatNote}
-                                    />
+                                    <RegionRendererContext.Provider value={renderRegion}>
+                                        <ChatPanel
+                                            session={chat}
+                                            onClose={() => setIsChatOpen(false)}
+                                            onSourceSelect={handlePassageSelect}
+                                            chatNotes={chatNotes}
+                                            onNoteOpen={openPageNote}
+                                            onRegionSelect={(region) => navigationRef.current?.showRegion(region)}
+                                        />
+                                    </RegionRendererContext.Provider>
                                 </div>
                             </Panel>
                         </>
@@ -550,14 +569,8 @@ export const DocumentReader: React.FC<DocumentReaderProps> = ({ document, reques
                 selection={explainSelection}
                 onClose={handleExplainCardClose}
                 portalContainer={readerViewport}
-                onSaveNote={(markdown) =>
-                    handleSaveNote(
-                        { selectedText: explainSelection?.text ?? "", comment: "", aiResponse: markdown, color: DEFAULT_NOTE_COLOR },
-                        null
-                    )
-                }
-                onCreateCard={handleExplanationCard}
-                onContinueInChat={handleExplanationToChat}
+                onSaveNote={handleExplanationNote}
+                onAskMore={handleAskMore}
                 onGoToPage={(page) => navigationRef.current?.goToPage(page)}
             />
 
@@ -566,16 +579,6 @@ export const DocumentReader: React.FC<DocumentReaderProps> = ({ document, reques
                 selection={cardSelection}
                 onClose={handleCardPopoverClose}
                 portalContainer={readerViewport}
-            />
-
-            <VisualQueryPanel
-                isOpen={isVisualQueryOpen}
-                onClose={handleVisualQueryClose}
-                previewImage={pendingRegion?.imageBase64 ?? null}
-                isLoading={visualQuery.isPending}
-                answer={visualQuery.data ?? null}
-                errorKey={visualQuery.error && getApiErrorKey(visualQuery.error)}
-                onAsk={handleAskVisualQuery}
             />
         </div>
     );

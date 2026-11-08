@@ -1,8 +1,10 @@
 import { useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocale } from "next-intl";
 import { api } from "@/lib/api-client";
 import { useRefreshUsage } from "@/app/[locale]/subscription/hooks/useSubscription";
+import type { RegionKind } from "@/app/[locale]/document/[id]/lib/page-regions";
+import type { PageRegion } from "@/app/[locale]/document/[id]/lib/region-image";
 
 // POST /ai/explain.
 export interface Explanation {
@@ -17,19 +19,28 @@ export type ExplainLevel = 1 | 2 | 3;
 export const MAX_EXPLAIN_LEVEL: ExplainLevel = 3;
 
 export interface ExplainSubject {
+  // Tells subjects apart in the cache: two figures on a page can have the same (empty) text.
+  id: string;
+  // The selected passage, or the text pdf.js found in a region.
   text: string;
   pageNumber: number;
+  // A region of the page (figure, table, formula, or a hand-made crop), sent as an image.
+  image?: string;
+  // What the parser detected; absent for a crop.
+  regionKind?: RegionKind;
+  // Where the image comes from, so a chat that follows can show it again later.
+  region?: PageRegion;
 }
 
 const PASSAGE = "";
 
 const explanationKey = (documentId: string, subject: ExplainSubject, term: string, level: ExplainLevel) =>
-  ["explanation", documentId, subject.pageNumber, subject.text, term, level] as const;
+  ["explanation", documentId, subject.id, term, level] as const;
 
 const sameTerm = (a: string, b: string) => a.toLocaleLowerCase() === b.toLocaleLowerCase();
 
-// The passage and every term opened from it, each with its own level. Explanations are cached by
-// passage, term and level, so going back or reopening a term never calls (or charges) again.
+// The passage and every term opened from it, each with its own level. The API keeps every
+// explanation, so opening the same thing again (even another day) is free; only "think again" isn't.
 export const useExplanation = (documentId: string, subject: ExplainSubject) => {
   const locale = useLocale();
   const queryClient = useQueryClient();
@@ -39,35 +50,48 @@ export const useExplanation = (documentId: string, subject: ExplainSubject) => {
 
   const term = trail.at(-1) ?? PASSAGE;
   const level = levels[term] ?? 1;
+  const key = explanationKey(documentId, subject, term, level);
   const previous =
     level > 1
       ? queryClient.getQueryData<Explanation>(explanationKey(documentId, subject, term, (level - 1) as ExplainLevel))
       : undefined;
 
+  const request = async (regenerate: boolean) => {
+    try {
+      const { data } = await api.post<{ explanation: Explanation }>("/ai/explain", {
+        documentId,
+        subjectId: subject.id,
+        regenerate: regenerate || undefined,
+        text: subject.text,
+        pageNumber: subject.pageNumber,
+        image: subject.image,
+        regionKind: subject.regionKind,
+        term: term || undefined,
+        level,
+        previous: previous && { coreIdea: previous.coreIdea, explanation: previous.explanation },
+        explainedTerms: trail,
+        responseLanguage: locale,
+      });
+      return data.explanation;
+    } finally {
+      refreshUsage();
+    }
+  };
+
   const query = useQuery({
-    queryKey: explanationKey(documentId, subject, term, level),
-    queryFn: async () => {
-      try {
-        const { data } = await api.post<{ explanation: Explanation }>("/ai/explain", {
-          documentId,
-          text: subject.text,
-          pageNumber: subject.pageNumber,
-          term: term || undefined,
-          level,
-          previous: previous && { coreIdea: previous.coreIdea, explanation: previous.explanation },
-          explainedTerms: trail,
-          responseLanguage: locale,
-        });
-        return data.explanation;
-      } finally {
-        refreshUsage();
-      }
-    },
-    // Each call spends a credit: never refetch on its own.
+    queryKey: key,
+    queryFn: () => request(false),
+    // Never refetch on its own: a new explanation is only made when the student asks for one.
     enabled: level === 1 || previous !== undefined,
     staleTime: Infinity,
     retry: false,
     refetchOnWindowFocus: false,
+  });
+
+  const thinkAgain = useMutation({
+    mutationFn: () => request(true),
+    onSuccess: (explanation) => queryClient.setQueryData(key, explanation),
+    meta: { inlineError: true },
   });
 
   // The model is told the trail too; this keeps the student from walking in circles regardless.
@@ -75,9 +99,10 @@ export const useExplanation = (documentId: string, subject: ExplainSubject) => {
 
   return {
     explanation: query.data ? { ...query.data, keyTerms } : null,
-    isLoading: query.isFetching,
-    error: query.error,
+    isLoading: query.isFetching || thinkAgain.isPending,
+    error: query.error ?? thinkAgain.error,
     retry: () => query.refetch(),
+    thinkAgain: () => thinkAgain.mutate(),
     term: term || null,
     trail,
     level,

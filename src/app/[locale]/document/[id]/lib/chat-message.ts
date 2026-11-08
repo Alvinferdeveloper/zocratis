@@ -1,12 +1,22 @@
 import type { UIMessage } from "ai";
 import type { ChatSource } from "@/app/types";
+import type { PageRegion } from "@/app/[locale]/document/[id]/lib/region-image";
 
 // The server sends a reply's sources as message metadata when the stream starts.
-export type ChatUIMessage = UIMessage<{ sources?: ChatSource[] }>;
+// A user message that followed an explanation of a region carries where that region is.
+export type ChatUIMessage = UIMessage<{ sources?: ChatSource[]; region?: PageRegion }>;
 
 export interface ChatContext {
   text: string;
   page: number;
+  // From an explanation: what goes along with the next message only, never stored.
+  followUp?: ChatFollowUp;
+}
+
+export interface ChatFollowUp {
+  image?: string;
+  region?: PageRegion;
+  explanation: string;
 }
 
 interface ParsedChatMessage {

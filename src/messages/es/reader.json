@@ -70,7 +70,8 @@
       "indexing": "Preparando la búsqueda por significado… Solo pasa la primera vez y puede tardar unos segundos.",
       "searching": "Buscando…",
       "semanticEmpty": "No encontramos pasajes sobre eso en el documento."
-    }
+    },
+    "fromRegion": "Guardada desde una figura, tabla o fórmula"
   },
   "selectionPopup": {
     "chat": "Chat",
@@ -86,7 +87,6 @@
     "keyTerms": "Términos clave",
     "definedOn": "El documento lo define en la pág. {page} →",
     "simplify": "No entiendo",
-    "continueInChat": "Seguir en el chat",
     "saveNote": "Guardar nota",
     "noteSaved": "Nota guardada",
     "card": "Tarjeta",
@@ -105,16 +105,12 @@
       "failed": "No del todo",
       "passedDone": "Bien. Puedes seguir leyendo.",
       "failedDone": "Añadida a tu repaso."
-    }
-  },
-  "visualQuery": {
-    "title": "Preguntar sobre imagen o fórmula",
-    "description": "Haz una pregunta sobre la imagen o fórmula seleccionada en el documento.",
-    "previewAlt": "Región seleccionada del documento",
-    "defaultQuestion": "¿Qué significa esto?",
-    "ask": "Preguntar",
-    "analyzing": "Analizando...",
-    "generating": "Generando explicación..."
+    },
+    "regionLabel": "{kind, select, table {Tabla} formula {Fórmula} image {Imagen} figure {Figura} other {Recorte}} · pág. {page}",
+    "cardFrontRegion": "{kind, select, table {¿Qué muestra la tabla} formula {¿Qué expresa la fórmula} image {¿Qué muestra la imagen} figure {¿Qué muestra la figura} other {¿Qué muestra el recorte}} de la pág. {page}?",
+    "thinkAgain": "Pensar de nuevo",
+    "askMore": "Pregunta algo más…",
+    "askMoreSend": "Preguntar en un chat nuevo"
   },
   "composer": {
     "send": "Enviar",
@@ -128,5 +124,12 @@
   "resume": {
     "notice": "Retomaste en la página {page}",
     "startOver": "Ir al inicio"
+  },
+  "regions": {
+    "explain": "Explicar",
+    "explainTable": "Explicar esta tabla",
+    "explainImage": "Explicar esta imagen",
+    "explainFigure": "Explicar esta figura",
+    "explainFormula": "Explicar esta fórmula"
   }
 }

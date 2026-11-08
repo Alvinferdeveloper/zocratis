@@ -56,5 +56,6 @@
       "description": "Se eliminarán todos sus mensajes. Esta acción no se puede deshacer.",
       "confirm": "Eliminar"
     }
-  }
+  },
+  "showInDocument": "Ver en el documento"
 }

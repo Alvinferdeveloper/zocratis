@@ -3,7 +3,12 @@ import type { ChatStatus } from "ai";
 import { Conversation } from "@/app/types";
 import { useConversations } from "@/app/[locale]/document/[id]/hooks/useConversations";
 import { useChatAssistant } from "@/app/[locale]/document/[id]/hooks/useChatAssistant";
-import { ChatContext, type ChatUIMessage, composeChatMessage } from "@/app/[locale]/document/[id]/lib/chat-message";
+import {
+  ChatContext,
+  type ChatFollowUp,
+  type ChatUIMessage,
+  composeChatMessage,
+} from "@/app/[locale]/document/[id]/lib/chat-message";
 import { toConversationTitle } from "@/app/[locale]/document/[id]/lib/conversation-groups";
 import { type ApiErrorKey, getApiErrorKey } from "@/lib/api-errors";
 
@@ -14,6 +19,7 @@ interface UseChatSessionOptions {
 interface PendingMessage {
   text: string;
   title: string;
+  followUp?: ChatFollowUp;
 }
 
 export interface UseChatSessionReturn {
@@ -28,6 +34,8 @@ export interface UseChatSessionReturn {
   attachContext: (context: ChatContext) => void;
   clearContext: () => void;
   send: (question: string) => void;
+  // Starts a new conversation with this question and context (asking more about an explanation).
+  askInNewConversation: (question: string, context: ChatContext) => void;
   retry: () => void;
   stop: () => void;
   selectConversation: (id: string) => void;
@@ -61,7 +69,7 @@ export const useChatSession = ({ documentId }: UseChatSessionOptions): UseChatSe
   // A draft's first message waits until its conversation exists and the chat has rebound to it.
   useEffect(() => {
     if (!conversationId || !pendingMessage.current) return;
-    sendToConversation(pendingMessage.current.text);
+    sendToConversation(pendingMessage.current.text, pendingMessage.current.followUp);
     pendingMessage.current = null;
   }, [conversationId, sendToConversation]);
 
@@ -82,14 +90,27 @@ export const useChatSession = ({ documentId }: UseChatSessionOptions): UseChatSe
   const send = useCallback(
     (question: string) => {
       const text = composeChatMessage(question, context);
+      const followUp = context?.followUp;
       setContext(null);
       if (conversationId) {
-        sendToConversation(text);
+        sendToConversation(text, followUp);
         return;
       }
-      startConversation({ text, title: toConversationTitle(question) });
+      startConversation({ text, title: toConversationTitle(question), followUp });
     },
     [context, conversationId, sendToConversation, startConversation]
+  );
+
+  const askInNewConversation = useCallback(
+    (question: string, followUpContext: ChatContext) => {
+      setContext(null);
+      startConversation({
+        text: composeChatMessage(question, followUpContext),
+        title: toConversationTitle(question),
+        followUp: followUpContext.followUp,
+      });
+    },
+    [startConversation]
   );
 
   const retry = useCallback(() => {
@@ -146,6 +167,7 @@ export const useChatSession = ({ documentId }: UseChatSessionOptions): UseChatSe
     attachContext: setContext,
     clearContext,
     send,
+    askInNewConversation,
     retry,
     stop: assistant.stop,
     selectConversation,
