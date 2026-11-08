@@ -1,25 +1,27 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
 import { Document } from '@/app/types';
+import { invalidateWorkspace } from '@/app/[locale]/workspace/lib/workspace-cache';
 
-const uploadDocument = async (formData: FormData): Promise<Document> => {
-  const { data } = await api.post('/documents/upload', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
-  return data;
-};
+interface UploadVariables {
+  formData: FormData;
+  // Share of the file sent, from 0 to 1.
+  onProgress?: (ratio: number) => void;
+}
 
-export const useUploadDocument = (topicId?: string) => {
+export const useUploadDocument = () => {
   const queryClient = useQueryClient();
-  return useMutation<Document, Error, FormData>({
-    mutationFn: uploadDocument,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['documents', topicId] });
-      queryClient.invalidateQueries({ queryKey: ['items'] });
-      queryClient.invalidateQueries({ queryKey: ['topics'] });
+  return useMutation<Document, Error, UploadVariables>({
+    mutationFn: async ({ formData, onProgress }) => {
+      const { data } = await api.post<Document>('/documents/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        onUploadProgress: (event) => {
+          if (event.total) onProgress?.(event.loaded / event.total);
+        },
+      });
+      return data;
     },
+    onSuccess: () => invalidateWorkspace(queryClient),
     // Changes the documents and storage quotas.
     meta: { refreshesUsage: true },
   });

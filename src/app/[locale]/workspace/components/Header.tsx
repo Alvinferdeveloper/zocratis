@@ -1,173 +1,64 @@
 import { useTranslations } from "next-intl";
-import { Button } from "@/components/ui/button";
-import { IconButton } from "@/components/ui/icon-button";
+import { Grid3X3, List } from "lucide-react";
+import { SearchField } from "@/components/ui/search-field";
 import { SegmentedControl } from "@/components/ui/segmented-control";
-import { Input } from "@/components/ui/input";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Search,
-  Grid3X3,
-  List,
-  LayoutGrid,
-  ArrowLeft,
-  Clock,
-  ArrowUpDown,
-  X,
-  Trash2,
-  Download,
-} from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Folder, Topic } from "@/app/types";
 import { UserProfileMenu } from "@/components/user-profile-menu";
-
-export type SortBy = "name" | "date";
+import type { SortBy, ViewMode } from "@/app/[locale]/workspace/lib/view-mode";
+import type { WorkspaceLocation } from "@/app/[locale]/workspace/hooks/useWorkspaceLocation";
+import { WorkspaceBreadcrumb } from "@/app/[locale]/workspace/components/WorkspaceBreadcrumb";
+import { SortMenu } from "@/app/[locale]/workspace/components/SortMenu";
 
 interface HeaderProps {
-  view: "recent" | "topic";
-  selectedTopic: Topic | null;
-  selectedFolder: Folder | null;
-  totalDocuments: number;
-  viewMode: "grid" | "list";
-  setViewMode: (mode: "grid" | "list") => void;
-  onGoBack?: () => void;
+  location: WorkspaceLocation;
+  itemCount: number;
   searchQuery: string;
-  setSearchQuery: (query: string) => void;
+  onSearchChange: (query: string) => void;
   sortBy: SortBy;
-  setSortBy: (sort: SortBy) => void;
-  selectedCount: number;
-  onClearSelection: () => void;
-  onBulkDelete: () => void;
-  onBulkDownload: () => void;
+  onSortChange: (sort: SortBy) => void;
+  viewMode: ViewMode;
+  onViewModeChange: (mode: ViewMode) => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
-  view,
-  selectedTopic,
-  selectedFolder,
-  totalDocuments,
-  viewMode,
-  setViewMode,
-  onGoBack,
+  location,
+  itemCount,
   searchQuery,
-  setSearchQuery,
+  onSearchChange,
   sortBy,
-  setSortBy,
-  selectedCount,
-  onClearSelection,
-  onBulkDelete,
-  onBulkDownload,
+  onSortChange,
+  viewMode,
+  onViewModeChange,
 }) => {
-  const t = useTranslations("workspace");
-  const hasSelection = selectedCount > 0;
+  const t = useTranslations("workspace.header");
+  const scopeName = location.folder?.name ?? location.topic?.name;
 
   return (
-    <header className="flex items-center justify-between gap-4 border-b border-border/60 bg-background px-6 py-3.5">
-      {hasSelection ? (
-        <div className="flex w-full items-center gap-3 animate-in fade-in slide-in-from-top-1 duration-200">
-          <IconButton label={t("header.clearSelection")} onClick={onClearSelection}>
-            <X />
-          </IconButton>
-          <span className="text-sm font-medium tabular-nums">
-            {t("header.selectedCount", { count: selectedCount })}
-          </span>
-          <div className="ml-auto flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={onBulkDownload}>
-              <Download className="size-3.5" />
-              {t("actions.download")}
-            </Button>
-            <Button variant="outline" size="sm" className="text-destructive hover:bg-destructive/10" onClick={onBulkDelete}>
-              <Trash2 className="size-3.5" />
-              {t("actions.delete")}
-            </Button>
-          </div>
-        </div>
-      ) : (
-        <>
-          <div className="flex min-w-0 items-center gap-3">
-            {onGoBack && (
-              <IconButton label={t("header.back")} onClick={onGoBack}>
-                <ArrowLeft />
-              </IconButton>
-            )}
-            <div className="min-w-0">
-              <h1 className="flex items-center gap-2 truncate text-lg font-semibold tracking-tight text-foreground">
-                {view === "recent" ? (
-                  <>
-                    <Clock className="h-4 w-4 shrink-0 text-muted-foreground" />
-                    {t("header.recent")}
-                  </>
-                ) : selectedFolder ? (
-                  <>
-                    <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: selectedFolder.color || "var(--muted-foreground)" }} />
-                    {selectedFolder.name}
-                  </>
-                ) : selectedTopic ? (
-                  <>
-                    <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: selectedTopic.color || "var(--muted-foreground)" }} />
-                    {selectedTopic.name}
-                  </>
-                ) : (
-                  <>
-                    <LayoutGrid className="h-4 w-4 shrink-0 text-muted-foreground" />
-                    {t("header.allDocuments")}
-                  </>
-                )}
-              </h1>
-              <p className="text-xs text-muted-foreground">
-                {t("header.documentCount", { count: totalDocuments })}
-              </p>
-            </div>
-          </div>
+    <>
+      <WorkspaceBreadcrumb location={location} count={itemCount} />
 
-          <div className="flex shrink-0 items-center gap-2">
-            <div className="relative hidden sm:block">
-              <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/70" />
-              <Input
-                placeholder={t("header.searchPlaceholder")}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="h-8 w-44 border-transparent bg-secondary/60 pl-8 text-sm transition-all focus-visible:w-64 focus-visible:bg-background focus-visible:ring-1"
-              />
-            </div>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <IconButton label={t("header.sort")}>
-                  <ArrowUpDown className="size-3.5" />
-                </IconButton>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setSortBy("name")} className={cn(sortBy === "name" && "font-medium text-primary")}>
-                  {t("header.sortByName")}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSortBy("date")} className={cn(sortBy === "date" && "font-medium text-primary")}>
-                  {t("header.sortByDate")}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <SegmentedControl
-              size="sm"
-              aria-label={t("header.viewMode")}
-              value={viewMode}
-              onChange={setViewMode}
-              options={[
-                { value: "grid", label: <Grid3X3 className="size-3.5" />, ariaLabel: t("header.gridView") },
-                { value: "list", label: <List className="size-3.5" />, ariaLabel: t("header.listView") },
-              ]}
-            />
-
-            <div className="ml-1 h-6 w-px bg-border" />
-
-            <UserProfileMenu />
-          </div>
-        </>
-      )}
-    </header>
+      <div className="ml-auto flex shrink-0 items-center gap-1.5">
+        <SearchField
+          shortcut="/"
+          value={searchQuery}
+          onChange={(event) => onSearchChange(event.target.value)}
+          placeholder={scopeName ? t("searchIn", { name: scopeName }) : t("searchRecent")}
+          aria-label={t("search")}
+          className="hidden w-56 sm:block"
+        />
+        <SortMenu value={sortBy} onChange={onSortChange} />
+        <SegmentedControl
+          size="sm"
+          aria-label={t("viewMode")}
+          value={viewMode}
+          onChange={onViewModeChange}
+          options={[
+            { value: "list", label: <List className="size-3.5" />, ariaLabel: t("listView") },
+            { value: "grid", label: <Grid3X3 className="size-3.5" />, ariaLabel: t("gridView") },
+          ]}
+        />
+        <div aria-hidden className="mx-1.5 h-5 w-px bg-border" />
+        <UserProfileMenu />
+      </div>
+    </>
   );
 };

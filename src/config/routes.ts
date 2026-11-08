@@ -6,6 +6,8 @@ export const ROUTES = {
   login: "/login",
   register: "/register",
   workspace: "/workspace",
+  workspaceCollection: (topicId: string, folderId?: string) =>
+    `/workspace?topic=${topicId}${folderId ? `&folder=${folderId}` : ""}`,
   subscription: "/subscription",
   adminMetrics: "/admin/metrics",
   // Without a document, the review covers all of them.

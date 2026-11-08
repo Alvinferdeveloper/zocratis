@@ -225,6 +225,10 @@ Dialogs are for confirmations and short, focused tasks; prefer an inline panel o
 
 ### Menus
 Dropdown menus: Ivory Sheet, 12px radius, Paper Edge border, Float, 4px padding; items are 32px tall with a 10px radius and a Paper Shade highlight.
+- **Single choice** (sort order, theme, language) uses radio items: the chosen one is medium weight with a check on the right, so the state never rests on color alone.
+
+### Checkbox
+`components/ui/checkbox.tsx`: 16px, 5px radius, Paper Edge stroke that turns ink on hover; checked is an ink fill with an ivory check. Row and tile checkboxes hide until hover only where hovering exists (`can-hover` variant) and stay visible while anything is selected.
 
 ### Scrollbars
 Native scrolling, styled once for the whole app: a muted thumb (45% Ink Muted) on a transparent track, set in `globals.css` and inherited everywhere. Panels, lists, menus and code blocks add `scrollbar-thin`; pages and the reader keep the regular width. A surface can blend the track with its own color through `--scrollbar-track` (the reader does). No JavaScript scroll areas.
@@ -233,8 +237,19 @@ Native scrolling, styled once for the whole app: a muted thumb (45% Ink Muted) o
 A sheet of paper, not a spell: Ivory Sheet (Night Sheet at night) with a Paper Edge border and Float. The word is the screen's serif moment (Instrument Serif italic); meanings are a divided list, "commonly confused" notes sit on a 10% ochre tint and the tip on Paper Shade. No gradients, glows or sparkles. In the reader header, language mode active uses the 10% ink tint like any selected item.
 
 ### Navigation
-- Side navigation sits on a slightly deeper paper (Paper Shade family) than the content; the active item uses a 10% ink tint and ink text.
-- Headers are quiet: muted icon buttons, the brand mark, and at most one primary action.
+- Side navigation sits on the `--sidebar` paper, slightly deeper than the content. Every entry is a `NavItem` (`components/ui/nav-item.tsx`): 32px, muted at rest, a 10% ink tint and ink text when current, counts in tabular mono on the right (`NavItemCount`).
+- Headers are quiet: muted icon buttons, the brand mark, and at most one primary action. Where there is a hierarchy the title is a breadcrumb: ancestors are muted links, the current place is the heading.
+- Search is a `SearchField` (`components/ui/search-field.tsx`) on a Paper Shade fill, named after its scope ("Buscar en Física") and focused with `/`.
+
+### Workspace
+- **Documents are pages, not files.** A document is drawn as a `PaperSheet` (Ivory Sheet with ruled lines and Lift); the ochre bookmark ribbon marks one being read. Tiles hold the sheet on a tray tinted 12% with the collection color.
+- **Collections are book spines** (`CollectionSwatch`, a small cloth-colored bar); folders keep the folder icon, so the two levels never read as one.
+- Rows show study state, not file metadata: reading progress and when it was last opened. Size lives only in the quota.
+- The open collection and folder live in the URL (`?topic=&folder=`).
+- Uploads start at once and report per-file progress in a corner tray (Float); dragging files over the window shows the scrim with where they will land.
+
+### Empty States
+`components/ui/empty-state.tsx`: an optional illustration, the screen's serif title, one muted sentence and the next action. Never an icon in a gray circle.
 
 ## 6. Do's and Don'ts
 

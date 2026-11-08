@@ -37,6 +37,7 @@ export const useFetchItems = (
   search?: string,
   folderId?: string | null,
   sortBy: 'date' | 'name' = 'date',
+  enabled = true,
 ) => {
   return useInfiniteQuery<PaginatedItems, Error>({
     // sortBy is part of the key on purpose: changing it must start a fresh
@@ -49,5 +50,6 @@ export const useFetchItems = (
       return lastPage.page < totalPages ? lastPage.page + 1 : undefined;
     },
     initialPageParam: 1,
+    enabled,
   });
 };

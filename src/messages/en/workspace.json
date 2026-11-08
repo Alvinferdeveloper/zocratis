@@ -6,30 +6,34 @@
     "unstar": "Unstar",
     "uploadDocument": "Upload document"
   },
-  "dropOverlay": "Drop the PDF to upload it",
   "bulkDelete": {
     "title": "{count, plural, one {Delete # item?} other {Delete # items?}}",
     "description": "This action can't be undone. If you selected a folder with content, empty it first to avoid leaving orphaned documents."
   },
   "header": {
     "recent": "Recent",
-    "allDocuments": "All documents",
-    "documentCount": "{count, plural, one {# document} other {# documents}}",
+    "breadcrumb": "Location",
+    "itemCount": "{count, plural, one {# item} other {# items}}",
     "selectedCount": "{count, plural, one {# selected} other {# selected}}",
-    "searchPlaceholder": "Search...",
-    "sortByName": "Sort by name",
-    "sortByDate": "Sort by date",
+    "search": "Search documents",
+    "searchIn": "Search in {name}",
+    "searchRecent": "Search recent",
     "clearSelection": "Clear selection",
-    "back": "Back",
-    "sort": "Sort",
     "viewMode": "View",
     "gridView": "Grid",
     "listView": "List"
   },
+  "sort": {
+    "title": "Sort by",
+    "label": "Sort: {order}",
+    "date": "Date",
+    "name": "Name"
+  },
   "sidebar": {
+    "navigation": "Workspace",
     "recent": "Recent",
     "collections": "Collections",
-    "noCollections": "You don't have any collections yet.",
+    "noCollections": "Group your documents by subject or project by creating a collection.",
     "documentsQuota": "{used} of {limit, plural, one {# document} other {# documents}}",
     "documentsUnlimited": "{used, plural, one {# document} other {# documents}}",
     "storageQuota": "{used} of {limit}",
@@ -38,15 +42,26 @@
   "newMenu": {
     "new": "New",
     "newFolder": "New folder",
-    "pdfOnly": "Only PDF files are allowed.",
-    "tagsPlaceholder": "Add tags (optional)",
-    "upload": "Upload",
-    "uploading": "Uploading...",
-    "uploadLimitReached": "You've reached your plan's limit."
+    "uploadLimitReached": "You've reached your plan's limit.",
+    "folderNeedsCollection": "Open a collection to create folders in it."
+  },
+  "upload": {
+    "pdfOnly": "Only PDF files can be uploaded.",
+    "title": "Uploads",
+    "uploading": "{count, plural, one {Uploading # document} other {Uploading # documents}}",
+    "finished": "Upload finished",
+    "dismiss": "Close",
+    "done": "Uploaded",
+    "failed": "Couldn't upload",
+    "percent": "{ratio, number, percent}"
+  },
+  "drop": {
+    "title": "Drop your PDFs to upload them",
+    "into": "They'll be saved in {place}",
+    "noCollection": "They'll be saved outside any collection"
   },
   "colorPicker": {
     "label": "Color",
-    "hint": "(Pick a color)",
     "custom": "Custom color",
     "colors": {
       "ink": "Ink",
@@ -60,19 +75,18 @@
     }
   },
   "folderDialog": {
-    "trigger": "New Folder",
-    "title": "Create Folder",
-    "description": "Create a new folder to organize your documents.",
-    "nameLabel": "Folder Name",
-    "namePlaceholder": "e.g. Notes, Exams...",
-    "submit": "Create Folder"
+    "title": "New folder",
+    "description": "Organize the documents in this collection.",
+    "nameLabel": "Name",
+    "namePlaceholder": "e.g. Notes, Exams",
+    "submit": "Create folder"
   },
   "topicDialog": {
-    "trigger": "Create new collection",
-    "title": "Create collection",
-    "description": "Organize your documents by creating a new collection.",
-    "nameLabel": "Collection name",
-    "namePlaceholder": "e.g. Physics, Project Alpha...",
+    "trigger": "New collection",
+    "title": "New collection",
+    "description": "Group the documents of a subject or a project.",
+    "nameLabel": "Name",
+    "namePlaceholder": "e.g. Physics, Thesis",
     "submit": "Create collection"
   },
   "deleteDialog": {
@@ -85,29 +99,37 @@
       "description": "The folder and its subfolders will be deleted. The documents inside aren't deleted: they'll be moved out of the folder."
     }
   },
+  "empty": {
+    "searchTitle": "Nothing matches “{query}”",
+    "searchDescription": "Try other words or part of the file name.",
+    "recentTitle": "Your desk is ready",
+    "recentDescription": "Upload a PDF to read it, ask it questions and test yourself without leaving the document.",
+    "collectionTitle": "No documents here yet",
+    "collectionDescription": "Upload a PDF or create a folder to organize this collection.",
+    "dropHint": "or drag the files onto this window"
+  },
   "list": {
-    "emptyTitle": "No items found",
-    "emptySearch": "We couldn't find anything matching your search.",
-    "emptyDefault": "Upload your first document or create a folder to get started.",
-    "root": "Root",
-    "noMoreItems": "No more items",
+    "selectAll": "Select all",
     "columns": {
       "name": "Name",
-      "modified": "Modified",
-      "size": "Size",
-      "actions": "Actions"
+      "reading": "Reading",
+      "lastOpened": "Last opened"
     }
   },
   "items": {
+    "select": "Select {name}",
     "fileCount": "{count, plural, one {# file} other {# files}}",
     "folderCount": "{count, plural, one {# folder} other {# folders}}",
-    "pageCount": "{count}p",
-    "noCollection": "No collection",
-    "unknownDate": "Unknown"
+    "pageCount": "{count, plural, one {# page} other {# pages}}",
+    "unknownDate": "Unknown",
+    "neverOpened": "Not opened"
   },
   "progress": {
     "label": "{ratio, number, percent} read",
-    "pageOf": "Page {page} of {total} · {ratio, number, percent}",
+    "pageOf": "Page {page} of {total}",
+    "percent": "{ratio, number, percent}",
+    "notStarted": "Not started",
+    "finished": "Finished",
     "continueAction": "Keep reading",
     "leftOff": "You left off on page {page}",
     "remaining": "{ratio, number, percent} · {count, plural, =0 {you reached the end} one {# page to go} other {# pages to go}}"

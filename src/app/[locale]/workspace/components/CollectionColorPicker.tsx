@@ -19,8 +19,8 @@ export const CollectionColorPicker: React.FC<CollectionColorPickerProps> = ({ se
 
   return (
     <div className="space-y-3">
-      <p id={labelId} className="flex items-center gap-2 text-sm font-medium">
-        {t("label")} <span className="text-xs font-normal text-muted-foreground">{t("hint")}</span>
+      <p id={labelId} className="text-sm font-medium">
+        {t("label")}
       </p>
 
       <div role="radiogroup" aria-labelledby={labelId} className="flex flex-wrap gap-3">
@@ -48,7 +48,7 @@ export const CollectionColorPicker: React.FC<CollectionColorPickerProps> = ({ se
           title={t("custom")}
           className={cn(
             swatchClass,
-            "relative border border-input bg-background hover:bg-accent has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring",
+            "relative border border-input bg-card hover:bg-accent has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring",
             isCustom && "border-transparent ring-2 ring-primary"
           )}
           style={isCustom ? { backgroundColor: selectedColor } : undefined}

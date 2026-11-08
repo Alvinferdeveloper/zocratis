@@ -1,108 +1,69 @@
-import React from "react";
 import { useTranslations } from "next-intl";
-import { IconButton } from "@/components/ui/icon-button";
 import { Clock, Plus } from "lucide-react";
-import { TopicList } from "@/app/[locale]/workspace/components/TopicList";
-import { CreateTopicDialog } from "@/app/[locale]/workspace/components/CreateTopicDialog";
-import { NewMenu } from "@/app/[locale]/workspace/components/NewMenu";
-import { StorageQuota } from "@/app/[locale]/workspace/components/StorageQuota";
+import { Link } from "@/i18n/navigation";
+import { ROUTES } from "@/config/routes";
+import { IconButton } from "@/components/ui/icon-button";
+import { NavItem } from "@/components/ui/nav-item";
+import { BrandLogo } from "@/components/brand/BrandLogo";
 import { ReviewNavLink } from "@/app/[locale]/review/components/ReviewNavLink";
 import { useFetchTopics } from "@/app/[locale]/workspace/hooks/useFetchTopics";
 import { useCreateTopic } from "@/app/[locale]/workspace/hooks/useCreateTopic";
-import { cn } from "@/lib/utils";
-import { BrandLogo } from "@/components/brand/BrandLogo";
-import { Folder, Topic } from "@/app/types";
+import type { WorkspaceLocation } from "@/app/[locale]/workspace/hooks/useWorkspaceLocation";
+import { TopicList } from "@/app/[locale]/workspace/components/TopicList";
+import { CollectionDialog } from "@/app/[locale]/workspace/components/CollectionDialog";
+import { StorageQuota } from "@/app/[locale]/workspace/components/StorageQuota";
 
 interface SidebarProps {
-  view: 'recent' | 'topic';
-  selectedTopic: Topic | null;
-  selectedFolder: Folder | null;
-  handleTopicSelect: (topic: Topic | null) => void;
-  onSelectRecent: () => void;
-  createFolder: (folder: { name: string; color: string; topicId: string; parentId?: string }) => void;
-  uploadDocument: (formData: FormData, options?: { onSuccess?: () => void; onError?: () => void }) => void;
-  isUploading: boolean;
+  location: WorkspaceLocation;
+  // The "New" menu, owned by the page because it shares the upload with drag and drop.
+  newMenu: React.ReactNode;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({
-  view,
-  selectedTopic,
-  selectedFolder,
-  handleTopicSelect,
-  onSelectRecent,
-  createFolder,
-  uploadDocument,
-  isUploading,
-}) => {
+export const Sidebar: React.FC<SidebarProps> = ({ location, newMenu }) => {
   const t = useTranslations("workspace");
   const { data: topics } = useFetchTopics();
   const { mutate: createTopic } = useCreateTopic();
 
   return (
-    <aside className="flex h-screen w-64 shrink-0 flex-col border-r border-border/60 bg-secondary/60">
-      {/* --- BRANDING --- */}
-      <div className="px-5 pt-5">
-        <BrandLogo className="text-base text-foreground" />
+    <aside className="flex h-screen w-60 shrink-0 flex-col border-r border-sidebar-border bg-sidebar">
+      <div className="px-4 pt-4">
+        <Link href={ROUTES.workspace} className="inline-flex rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring">
+          <BrandLogo className="text-base text-foreground" />
+        </Link>
       </div>
 
-      {/* --- NEW BUTTON --- */}
-      <div className="px-5 pt-4">
-        <NewMenu
-          selectedTopic={selectedTopic}
-          selectedFolder={selectedFolder}
-          createFolder={createFolder}
-          uploadDocument={uploadDocument}
-          isUploading={isUploading}
-          className="w-full justify-center"
-        />
-      </div>
+      <div className="px-3 pt-5">{newMenu}</div>
 
-      {/* --- NAVIGATION --- */}
-      <div className="mt-5 min-h-0 flex-1 overflow-y-auto scrollbar-thin px-3">
-        <nav className="space-y-0.5">
-          <button
-            onClick={onSelectRecent}
-            className={cn(
-              "press-feedback flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors duration-150",
-              view === 'recent'
-                ? "bg-primary/10 font-medium text-primary"
-                : "text-muted-foreground hover:bg-accent hover:text-foreground"
-            )}
-          >
-            <Clock className="h-4 w-4" />
-            {t("sidebar.recent")}
-          </button>
+      <nav aria-label={t("sidebar.navigation")} className="mt-5 min-h-0 flex-1 overflow-y-auto px-3 pb-4 scrollbar-thin">
+        <div className="space-y-0.5">
+          <NavItem asChild isActive={!location.topicId}>
+            <Link href={ROUTES.workspace}>
+              <Clock />
+              {t("sidebar.recent")}
+            </Link>
+          </NavItem>
           <ReviewNavLink />
-        </nav>
+        </div>
 
-        <div className="mt-6 flex items-center justify-between px-3">
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            {t("sidebar.collections")}
-          </h3>
-          <CreateTopicDialog
-            createTopic={createTopic}
+        <div className="mb-1 mt-7 flex items-center justify-between pl-2.5">
+          <h2 className="text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground">{t("sidebar.collections")}</h2>
+          <CollectionDialog
+            kind="topic"
+            onSubmit={createTopic}
             trigger={
-              <IconButton size="icon-sm" label={t("topicDialog.trigger")} className="-my-1">
+              <IconButton size="icon-sm" label={t("topicDialog.trigger")}>
                 <Plus className="size-3.5" />
               </IconButton>
             }
           />
         </div>
 
-        <div className="mt-1">
-          {topics && topics.length > 0 ? (
-            <TopicList
-              topics={topics}
-              selectedTopic={view === 'topic' ? selectedTopic : null}
-              handleTopicSelect={handleTopicSelect}
-            />
-          ) : (
-            <p className="px-3 py-2 text-xs text-muted-foreground">
-              {t("sidebar.noCollections")}
-            </p>
-          )}
-        </div>
-      </div>
+        {topics && topics.length > 0 ? (
+          <TopicList topics={topics} activeTopicId={location.topicId} />
+        ) : (
+          <p className="px-2.5 py-1.5 text-xs leading-relaxed text-muted-foreground">{t("sidebar.noCollections")}</p>
+        )}
+      </nav>
 
       <StorageQuota />
     </aside>

@@ -1,266 +1,107 @@
-import React from "react";
 import { useTranslations } from "next-intl";
-import { useRouter } from "@/i18n/navigation";
-import { Inbox, ChevronRight, Upload, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ROUTES } from "@/config/routes";
+import { Checkbox } from "@/components/ui/checkbox";
+import type { Topic } from "@/app/types";
+import { ROW_GRID } from "@/app/[locale]/workspace/lib/item-styles";
+import { ITEMS_LAYOUT, type ViewMode } from "@/app/[locale]/workspace/lib/view-mode";
+import type { WorkspaceItem } from "@/app/[locale]/workspace/hooks/useWorkspaceItems";
+import type { useSelection } from "@/app/[locale]/workspace/hooks/useSelection";
+import { useLoadMoreOnScroll } from "@/app/[locale]/workspace/hooks/useLoadMoreOnScroll";
 import { DocumentCard } from "@/app/[locale]/workspace/components/DocumentCard";
 import { DocumentListItem } from "@/app/[locale]/workspace/components/DocumentListItem";
-import { FolderListItem } from "@/app/[locale]/workspace/components/FolderListItem";
 import { FolderCard } from "@/app/[locale]/workspace/components/FolderCard";
-import FolderIcon from "@/app/icons/Folder";
-import { Document, Topic, Folder } from "@/app/types";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import { FolderListItem } from "@/app/[locale]/workspace/components/FolderListItem";
+import { ItemsSkeleton } from "@/app/[locale]/workspace/components/ItemsSkeleton";
+
+export interface ItemHandlers {
+  deleteDocument: (id: string) => void;
+  deleteFolder: (id: string) => void;
+  toggleDocumentStar: (toggle: { id: string; isStarred: boolean }) => void;
+  toggleFolderStar: (toggle: { id: string; isStarred: boolean }) => void;
+}
 
 interface DocumentListProps {
-  items: (Document | Folder)[];
-  selectedFolder: Folder | null;
-  topics: Topic[];
-  viewMode: "grid" | "list";
-  searchQuery: string;
-  deleteDocument: (documentId: string) => void;
-  deleteFolder: (folderId: string) => void;
+  items: WorkspaceItem[];
+  viewMode: ViewMode;
+  collections: Topic[];
+  // Name each document's collection, where documents of several collections mix.
+  showCollection: boolean;
+  selection: ReturnType<typeof useSelection>;
+  handlers: ItemHandlers;
   hasNextPage?: boolean;
   isFetchingNextPage?: boolean;
   fetchNextPage?: () => void;
-  onFolderSelect: (folder: Folder | null) => void;
-  onGoBack?: () => void;
-  currentPath: { type: 'topic' | 'folder', item: Topic | Folder }[];
-  showUploadCta?: boolean;
-  onUploadCtaClick?: () => void;
-  selectedIds?: Set<string>;
-  onToggleSelect?: (id: string) => void;
-  allSelected?: boolean;
-  onToggleSelectAll?: () => void;
-  onToggleDocumentStar?: (id: string, isStarred: boolean) => void;
-  onToggleFolderStar?: (id: string, isStarred: boolean) => void;
 }
+
+const ListHeader: React.FC<{ allSelected: boolean; onToggleAll: () => void }> = ({ allSelected, onToggleAll }) => {
+  const t = useTranslations("workspace.list");
+
+  return (
+    <div className={cn(ROW_GRID, "border-b border-border/60 px-2 pb-2 text-xs font-medium text-muted-foreground")}>
+      <Checkbox checked={allSelected} onCheckedChange={onToggleAll} aria-label={t("selectAll")} />
+      <span>{t("columns.name")}</span>
+      <span className="hidden md:block">{t("columns.reading")}</span>
+      <span className="hidden md:block">{t("columns.lastOpened")}</span>
+    </div>
+  );
+};
 
 export const DocumentList: React.FC<DocumentListProps> = ({
   items,
-  selectedFolder,
-  topics,
   viewMode,
-  searchQuery,
-  deleteDocument,
-  deleteFolder,
+  collections,
+  showCollection,
+  selection,
+  handlers,
   hasNextPage,
   isFetchingNextPage,
   fetchNextPage,
-  onFolderSelect,
-  onGoBack,
-  currentPath,
-  showUploadCta,
-  onUploadCtaClick,
-  selectedIds,
-  onToggleSelect,
-  allSelected,
-  onToggleSelectAll,
-  onToggleDocumentStar,
-  onToggleFolderStar,
 }) => {
-  const t = useTranslations("workspace");
-  const router = useRouter();
-  const observerTarget = React.useRef(null);
-
-  React.useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
-          fetchNextPage?.();
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    if (observerTarget.current) {
-      observer.observe(observerTarget.current);
-    }
-
-    return () => {
-      if (observerTarget.current) {
-        observer.unobserve(observerTarget.current);
-      }
-    };
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
-
-  const showEmptyState = items.length === 0;
-
-  if (showEmptyState) {
-    return (
-      <div className="flex flex-col items-center justify-center h-[50vh] text-center p-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
-        <div className="bg-muted/30 p-6 rounded-full mb-4">
-          <Inbox className="h-10 w-10 text-muted-foreground/40" />
-        </div>
-        <h3 className="text-lg font-semibold text-foreground">{t("list.emptyTitle")}</h3>
-        <p className="text-sm text-muted-foreground max-w-xs mt-2">
-          {searchQuery
-            ? t("list.emptySearch")
-            : t("list.emptyDefault")}
-        </p>
-        {!searchQuery && showUploadCta && (
-          <Button onClick={onUploadCtaClick} size="sm" className="mt-5">
-            <Upload />
-            {t("actions.uploadDocument")}
-          </Button>
-        )}
-      </div>
-    );
-  }
-
-  const handleDocumentClick = (docId: string) => {
-    router.push(ROUTES.document(docId));
-  };
+  const sentinelRef = useLoadMoreOnScroll({ hasNextPage, isFetchingNextPage, fetchNextPage });
+  const selectionMode = selection.count > 0;
 
   return (
-    <div className="flex flex-col h-full w-full">
+    <div>
+      {viewMode === "list" && <ListHeader allSelected={selection.allSelected} onToggleAll={selection.toggleAll} />}
 
-      {/* Breadcrumb / Path Navigation */}
-      {currentPath.length > 0 && (
-        <div className="flex items-center gap-1 pb-3 overflow-x-auto scrollbar-thin">
-          {currentPath.map((item, index) => (
-            <React.Fragment key={index}>
-              {index > 0 && <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  if (item.type === 'topic') {
-                    onFolderSelect(null);
-                  } else {
-                    onFolderSelect(item.item as Folder);
-                  }
-                }}
-                className="h-7 gap-1 px-2"
-              >
-                {item.type === 'folder' && index < currentPath.length - 1 && (
-                  <FolderIcon size="sm" color={(item.item as Folder).color} />
-                )}
-                {index === 0 ? t("list.root") : (item.item as Folder).name}
-              </Button>
-            </React.Fragment>
-          ))}
-        </div>
-      )}
+      <div className={cn(ITEMS_LAYOUT[viewMode], "py-2")}>
+        {items.map((item) => {
+          const shared = {
+            isSelected: selection.selectedIds.has(item.id),
+            selectionMode,
+            onToggleSelect: () => selection.toggle(item.id),
+          };
 
-      {/* Header of the table (Only visible in list mode) */}
-      {viewMode === "list" && (
-        <div className="grid grid-cols-12 gap-4 px-2 py-2 text-xs font-medium text-muted-foreground border-b border-border/60 select-none">
-          <div className="col-span-1 flex items-center">
-            <button
-              onClick={onToggleSelectAll}
-              className={cn(
-                "press-feedback flex h-5 w-5 items-center justify-center rounded-md border-2 transition-colors duration-150",
-                allSelected ? "border-primary bg-primary text-primary-foreground" : "border-border hover:border-primary"
-              )}
-            >
-              {allSelected && <Check className="h-3 w-3" strokeWidth={3} />}
-            </button>
-          </div>
-          <div className="col-span-5">{t("list.columns.name")}</div>
-          <div className="col-span-2">{t("list.columns.modified")}</div>
-          <div className="col-span-2">{t("list.columns.size")}</div>
-          <div className="col-span-2 text-right">{t("list.columns.actions")}</div>
-        </div>
-      )}
-
-      {/* List of folders and documents */}
-      <div className="flex-1 overflow-y-auto scrollbar-thin py-2">
-        <div
-          key={viewMode}
-          className={
-            viewMode === "grid"
-              ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 p-2 animate-in fade-in duration-200"
-              : "space-y-0.5 animate-in fade-in duration-200"
+          if (item.type === "folder") {
+            const FolderItem = viewMode === "grid" ? FolderCard : FolderListItem;
+            return (
+              <FolderItem
+                key={item.id}
+                folder={item}
+                onToggleStar={() => handlers.toggleFolderStar({ id: item.id, isStarred: !item.isStarred })}
+                onDelete={() => handlers.deleteFolder(item.id)}
+                {...shared}
+              />
+            );
           }
-        >
-          {items.map((item, index) => {
-            if (item.type === 'folder') {
-              const folder = item as Folder;
-              const isSelected = selectedIds?.has(folder.id) ?? false;
-              return viewMode === "grid" ? (
-                <FolderCard
-                  key={folder.id}
-                  folder={folder}
-                  index={index}
-                  onClick={() => onFolderSelect(folder)}
-                  deleteFolder={deleteFolder}
-                  isSelected={isSelected}
-                  onToggleSelect={() => onToggleSelect?.(folder.id)}
-                  onToggleStar={() => onToggleFolderStar?.(folder.id, !folder.isStarred)}
-                />
-              ) : (
-                <FolderListItem
-                  key={folder.id}
-                  folder={folder}
-                  onClick={() => onFolderSelect(folder)}
-                  deleteFolder={deleteFolder}
-                  isSelected={isSelected}
-                  onToggleSelect={() => onToggleSelect?.(folder.id)}
-                  onToggleStar={() => onToggleFolderStar?.(folder.id, !folder.isStarred)}
-                />
-              );
-            } else {
-              const doc = item as Document;
-              const topic = topics.find((t) => t.id === doc.topicId);
 
-              const isSelected = selectedIds?.has(doc.id) ?? false;
+          const DocumentItem = viewMode === "grid" ? DocumentCard : DocumentListItem;
+          return (
+            <DocumentItem
+              key={item.id}
+              doc={item}
+              collection={showCollection ? collections.find((collection) => collection.id === item.topicId) : undefined}
+              onToggleStar={() => handlers.toggleDocumentStar({ id: item.id, isStarred: !item.isStarred })}
+              onDelete={() => handlers.deleteDocument(item.id)}
+              {...shared}
+            />
+          );
+        })}
 
-              return viewMode === "grid" ? (
-                <DocumentCard
-                  key={doc.id}
-                  doc={doc}
-                  topic={topic}
-                  index={index}
-                  deleteDocument={deleteDocument}
-                  onClick={() => handleDocumentClick(doc.id)}
-                  isSelected={isSelected}
-                  onToggleSelect={() => onToggleSelect?.(doc.id)}
-                  onToggleStar={() => onToggleDocumentStar?.(doc.id, !doc.isStarred)}
-                />
-              ) : (
-                <DocumentListItem
-                  key={doc.id}
-                  doc={doc}
-                  topic={topic}
-                  deleteDocument={deleteDocument}
-                  onClick={() => handleDocumentClick(doc.id)}
-                  isSelected={isSelected}
-                  onToggleSelect={() => onToggleSelect?.(doc.id)}
-                  onToggleStar={() => onToggleDocumentStar?.(doc.id, !doc.isStarred)}
-                />
-              );
-            }
-          })}
-
-          {isFetchingNextPage && viewMode === "grid" &&
-            Array.from({ length: 3 }).map((_, i) => (
-              <div key={`skeleton-${i}`} className="flex flex-col gap-2 p-2">
-                <Skeleton className="aspect-[4/3] w-full rounded-lg" />
-                <div className="space-y-1.5 px-1">
-                  <Skeleton className="h-3.5 w-3/4" />
-                  <Skeleton className="h-3 w-1/2" />
-                </div>
-              </div>
-            ))}
-        </div>
-
-        {isFetchingNextPage && viewMode === "list" && (
-          <div className="space-y-2 px-2 py-2">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <Skeleton key={`skeleton-row-${i}`} className="h-10 w-full" />
-            ))}
-          </div>
-        )}
-
-        {/* Intersection Observer Target */}
-        <div ref={observerTarget} className="h-10 w-full flex items-center justify-center mt-4">
-          {!hasNextPage && items.length > 0 && (
-            <span className="text-xs text-muted-foreground italic">{t("list.noMoreItems")}</span>
-          )}
-        </div>
+        {isFetchingNextPage && <ItemsSkeleton viewMode={viewMode} count={3} />}
       </div>
+
+      <div ref={sentinelRef} aria-hidden className="h-px" />
     </div>
   );
 };

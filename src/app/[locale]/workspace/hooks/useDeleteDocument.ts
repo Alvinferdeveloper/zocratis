@@ -1,19 +1,14 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api-client';
+import { invalidateWorkspace } from '@/app/[locale]/workspace/lib/workspace-cache';
 
-const deleteDocument = async (documentId: string): Promise<void> => {
-  await api.delete(`/documents/${documentId}`);
-};
-
-export const useDeleteDocument = (topicId?: string) => {
+export const useDeleteDocument = () => {
   const queryClient = useQueryClient();
   return useMutation<void, Error, string>({
-    mutationFn: deleteDocument,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['documents', topicId] });
-      queryClient.invalidateQueries({ queryKey: ['items'] });
-      queryClient.invalidateQueries({ queryKey: ['topics'] });
+    mutationFn: async (documentId) => {
+      await api.delete(`/documents/${documentId}`);
     },
+    onSuccess: () => invalidateWorkspace(queryClient),
     // Changes the documents and storage quotas.
     meta: { refreshesUsage: true },
   });

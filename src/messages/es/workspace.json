@@ -6,30 +6,34 @@
     "unstar": "Quitar de destacados",
     "uploadDocument": "Subir documento"
   },
-  "dropOverlay": "Suelta el PDF para subirlo",
   "bulkDelete": {
     "title": "{count, plural, one {¿Eliminar # elemento?} other {¿Eliminar # elementos?}}",
     "description": "Esta acción no se puede deshacer. Si seleccionaste una carpeta con contenido, vacíala primero para evitar dejar documentos huérfanos."
   },
   "header": {
     "recent": "Recientes",
-    "allDocuments": "Todos los documentos",
-    "documentCount": "{count, plural, one {# documento} other {# documentos}}",
+    "breadcrumb": "Ubicación",
+    "itemCount": "{count, plural, one {# elemento} other {# elementos}}",
     "selectedCount": "{count, plural, one {# seleccionado} other {# seleccionados}}",
-    "searchPlaceholder": "Buscar...",
-    "sortByName": "Ordenar por nombre",
-    "sortByDate": "Ordenar por fecha",
+    "search": "Buscar documentos",
+    "searchIn": "Buscar en {name}",
+    "searchRecent": "Buscar en recientes",
     "clearSelection": "Quitar selección",
-    "back": "Volver",
-    "sort": "Ordenar",
     "viewMode": "Vista",
     "gridView": "Cuadrícula",
     "listView": "Lista"
   },
+  "sort": {
+    "title": "Ordenar por",
+    "label": "Ordenar: {order}",
+    "date": "Fecha",
+    "name": "Nombre"
+  },
   "sidebar": {
+    "navigation": "Espacio de trabajo",
     "recent": "Recientes",
     "collections": "Colecciones",
-    "noCollections": "Aún no tienes colecciones.",
+    "noCollections": "Agrupa tus documentos por materia o proyecto creando una colección.",
     "documentsQuota": "{used} de {limit, plural, one {# documento} other {# documentos}}",
     "documentsUnlimited": "{used, plural, one {# documento} other {# documentos}}",
     "storageQuota": "{used} de {limit}",
@@ -38,15 +42,26 @@
   "newMenu": {
     "new": "Nuevo",
     "newFolder": "Carpeta nueva",
-    "pdfOnly": "Solo se permiten archivos PDF.",
-    "tagsPlaceholder": "Agregar etiquetas (opcional)",
-    "upload": "Subir",
-    "uploading": "Subiendo...",
-    "uploadLimitReached": "Llegaste al límite de tu plan."
+    "uploadLimitReached": "Llegaste al límite de tu plan.",
+    "folderNeedsCollection": "Abre una colección para crear carpetas dentro."
+  },
+  "upload": {
+    "pdfOnly": "Solo se pueden subir archivos PDF.",
+    "title": "Subidas",
+    "uploading": "{count, plural, one {Subiendo # documento} other {Subiendo # documentos}}",
+    "finished": "Subida terminada",
+    "dismiss": "Cerrar",
+    "done": "Subido",
+    "failed": "No se pudo subir",
+    "percent": "{ratio, number, percent}"
+  },
+  "drop": {
+    "title": "Suelta tus PDF para subirlos",
+    "into": "Se guardarán en {place}",
+    "noCollection": "Se guardarán sin colección"
   },
   "colorPicker": {
     "label": "Color",
-    "hint": "(Elige un color)",
     "custom": "Color personalizado",
     "colors": {
       "ink": "Tinta",
@@ -60,19 +75,18 @@
     }
   },
   "folderDialog": {
-    "trigger": "Nueva Carpeta",
-    "title": "Crear Carpeta",
-    "description": "Crea una nueva carpeta para organizar tus documentos.",
-    "nameLabel": "Nombre de la Carpeta",
-    "namePlaceholder": "p. ej. Apuntes, Exámenes...",
-    "submit": "Crear Carpeta"
+    "title": "Nueva carpeta",
+    "description": "Ordena los documentos de esta colección.",
+    "nameLabel": "Nombre",
+    "namePlaceholder": "p. ej. Apuntes, Exámenes",
+    "submit": "Crear carpeta"
   },
   "topicDialog": {
-    "trigger": "Crear nueva colección",
-    "title": "Crear colección",
-    "description": "Organiza tus documentos creando una nueva colección.",
-    "nameLabel": "Nombre de la colección",
-    "namePlaceholder": "p. ej. Física, Proyecto Alfa...",
+    "trigger": "Nueva colección",
+    "title": "Nueva colección",
+    "description": "Agrupa los documentos de una materia o un proyecto.",
+    "nameLabel": "Nombre",
+    "namePlaceholder": "p. ej. Física, Tesis",
     "submit": "Crear colección"
   },
   "deleteDialog": {
@@ -85,29 +99,37 @@
       "description": "Se eliminarán la carpeta y sus subcarpetas. Los documentos que contienen no se borran: quedarán fuera de la carpeta."
     }
   },
+  "empty": {
+    "searchTitle": "Nada coincide con «{query}»",
+    "searchDescription": "Prueba con otras palabras o con parte del nombre del archivo.",
+    "recentTitle": "Tu escritorio está listo",
+    "recentDescription": "Sube un PDF para leerlo, hacerle preguntas y ponerte a prueba sin salir del documento.",
+    "collectionTitle": "Aquí aún no hay documentos",
+    "collectionDescription": "Sube un PDF o crea una carpeta para ordenar esta colección.",
+    "dropHint": "o arrastra los archivos a esta ventana"
+  },
   "list": {
-    "emptyTitle": "No se encontraron elementos",
-    "emptySearch": "No encontramos nada que coincida con tu búsqueda.",
-    "emptyDefault": "Sube tu primer documento o crea una carpeta para empezar.",
-    "root": "Raíz",
-    "noMoreItems": "No hay más elementos",
+    "selectAll": "Seleccionar todo",
     "columns": {
       "name": "Nombre",
-      "modified": "Modificado",
-      "size": "Tamaño",
-      "actions": "Acciones"
+      "reading": "Lectura",
+      "lastOpened": "Último acceso"
     }
   },
   "items": {
+    "select": "Seleccionar {name}",
     "fileCount": "{count, plural, one {# archivo} other {# archivos}}",
     "folderCount": "{count, plural, one {# carpeta} other {# carpetas}}",
-    "pageCount": "{count}p",
-    "noCollection": "Sin colección",
-    "unknownDate": "Desconocida"
+    "pageCount": "{count, plural, one {# página} other {# páginas}}",
+    "unknownDate": "Desconocida",
+    "neverOpened": "Sin abrir"
   },
   "progress": {
     "label": "{ratio, number, percent} leído",
-    "pageOf": "Página {page} de {total} · {ratio, number, percent}",
+    "pageOf": "Página {page} de {total}",
+    "percent": "{ratio, number, percent}",
+    "notStarted": "Sin empezar",
+    "finished": "Terminado",
     "continueAction": "Seguir leyendo",
     "leftOff": "Te quedaste en la página {page}",
     "remaining": "{ratio, number, percent} · {count, plural, =0 {llegaste al final} one {# página por leer} other {# páginas por leer}}"

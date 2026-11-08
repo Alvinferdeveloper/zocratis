@@ -1,38 +1,26 @@
-import { useTranslations } from "next-intl";
-import Folder from "@/app/icons/Folder";
+import { Link } from "@/i18n/navigation";
+import { ROUTES } from "@/config/routes";
+import { NavItem, NavItemCount } from "@/components/ui/nav-item";
 import { Topic } from "@/app/types";
-import { cn } from "@/lib/utils";
+import { CollectionSwatch } from "@/app/[locale]/workspace/components/CollectionSwatch";
 
 interface TopicListProps {
   topics: Topic[];
-  selectedTopic: Topic | null;
-  handleTopicSelect: (topic: Topic) => void;
+  activeTopicId: string | null;
 }
 
-export const TopicList: React.FC<TopicListProps> = ({ topics, selectedTopic, handleTopicSelect }) => {
-  const t = useTranslations("workspace");
-  return (
-    <div className="space-y-0.5">
-      {topics.map((topic) => {
-        const isSelected = selectedTopic?.id === topic.id;
-        return (
-          <button
-            key={topic.id}
-            onClick={() => handleTopicSelect(topic)}
-            aria-current={isSelected ? "page" : undefined}
-            className={cn(
-              "press-feedback flex w-full items-center gap-3 rounded-md px-2 py-1.5 text-left text-sm",
-              isSelected ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-accent hover:text-foreground"
-            )}
-          >
-            <Folder size="lg" color={topic.color} />
-            <div className="min-w-0 flex-1">
-              <div className="truncate font-medium">{topic.name}</div>
-              <div className="text-xs text-muted-foreground">{t("items.fileCount", { count: topic.count })}</div>
-            </div>
-          </button>
-        )
-      })}
-    </div>
-  );
-};
+export const TopicList: React.FC<TopicListProps> = ({ topics, activeTopicId }) => (
+  <ul className="space-y-0.5">
+    {topics.map((topic) => (
+      <li key={topic.id}>
+        <NavItem asChild isActive={topic.id === activeTopicId}>
+          <Link href={ROUTES.workspaceCollection(topic.id)}>
+            <CollectionSwatch color={topic.color} />
+            <span className="truncate">{topic.name}</span>
+            <NavItemCount>{topic.count}</NavItemCount>
+          </Link>
+        </NavItem>
+      </li>
+    ))}
+  </ul>
+);

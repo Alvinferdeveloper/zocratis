@@ -1,119 +1,24 @@
-import React from "react";
-import { useFormatter, useTranslations } from "next-intl";
+import { ROUTES } from "@/config/routes";
 import FolderIcon from "@/app/icons/Folder";
-import { Folder } from "@/app/types";
-import { Check, Star, Trash2 } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { IconButton } from "@/components/ui/icon-button";
-import { formatBytes } from "@/lib/format";
-import { DeleteConfirmationDialog } from "./DeleteConfirmationDialog";
+import { ItemTile } from "@/app/[locale]/workspace/components/items/ItemTile";
+import { ItemActions } from "@/app/[locale]/workspace/components/items/ItemActions";
+import { useFolderSummary } from "@/app/[locale]/workspace/hooks/useFolderSummary";
+import type { FolderItemProps } from "@/app/[locale]/workspace/components/items/types";
 
-interface FolderCardProps {
-  folder: Folder;
-  onClick: () => void;
-  deleteFolder?: (folderId: string) => void;
-  className?: string;
-  index?: number;
-  isSelected?: boolean;
-  onToggleSelect?: () => void;
-  onToggleStar?: () => void;
-}
-
-const actionButtonClass = "bg-card/90 shadow-lift focus-visible:opacity-100";
-
-export const FolderCard: React.FC<FolderCardProps> = ({
-  folder,
-  onClick,
-  deleteFolder,
-  className,
-  index = 0,
-  isSelected = false,
-  onToggleSelect,
-  onToggleStar,
-}) => {
-  const t = useTranslations("workspace");
-  const format = useFormatter();
-  const tint = folder.color || "var(--muted-foreground)";
+export const FolderCard: React.FC<FolderItemProps> = ({ folder, onToggleStar, onDelete, ...selection }) => {
+  const summary = useFolderSummary(folder);
 
   return (
-    <div
-      onClick={onClick}
-      style={{ animationDelay: `${Math.min(index, 12) * 40}ms` }}
-      className={cn(
-        "group relative flex cursor-pointer flex-col gap-2 rounded-lg p-2 transition-colors duration-150 ease-[var(--ease-out)] animate-in fade-in slide-in-from-bottom-1",
-        isSelected ? "bg-primary/[0.06]" : "hover:bg-accent/60",
-        className
-      )}
-    >
-      {/* Miniatura */}
-      <div
-        className={cn(
-          "relative flex aspect-[4/3] items-center justify-center overflow-hidden rounded-lg transition-transform duration-200 ease-[var(--ease-out)] group-hover:scale-[1.02]",
-          isSelected && "ring-2 ring-primary"
-        )}
-        style={{ backgroundColor: `color-mix(in oklch, ${tint} 10%, var(--muted))` }}
-      >
-        <FolderIcon size="lg" color={folder.color} />
-
-        {/* Checkbox de selección */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onToggleSelect?.();
-          }}
-          className={cn(
-            "press-feedback absolute left-2 top-2 flex h-5 w-5 items-center justify-center rounded-md border-2 transition-all duration-150",
-            isSelected
-              ? "border-primary bg-primary text-primary-foreground opacity-100"
-              : "border-border bg-card/80 opacity-0 group-hover:opacity-100 hover:border-primary"
-          )}
-        >
-          {isSelected && <Check className="h-3 w-3" strokeWidth={3} />}
-        </button>
-
-        {/* Acciones en línea */}
-        <div className="absolute right-2 top-2 flex items-center gap-1">
-          <IconButton
-            size="icon-sm"
-            label={folder.isStarred ? t("actions.unstar") : t("actions.star")}
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggleStar?.();
-            }}
-            className={cn(actionButtonClass, folder.isStarred ? "text-ochre opacity-100 hover:text-ochre" : "text-foreground opacity-0 group-hover:opacity-100")}
-          >
-            <Star className={cn("size-3.5", folder.isStarred && "fill-current")} />
-          </IconButton>
-          <DeleteConfirmationDialog
-            itemType="folder"
-            onConfirm={() => deleteFolder?.(folder.id)}
-            trigger={(open) => (
-              <IconButton
-                size="icon-sm"
-                variant="ghost-destructive"
-                label={t("actions.delete")}
-                onClick={open}
-                className={cn(actionButtonClass, "text-foreground opacity-0 group-hover:opacity-100")}
-              >
-                <Trash2 className="size-3.5" />
-              </IconButton>
-            )}
-          />
-        </div>
-      </div>
-
-      {/* Metadatos */}
-      <div className="min-w-0 px-1">
-        <h4 className="truncate text-sm font-medium text-foreground">{folder.name}</h4>
-        <p className="truncate text-xs text-muted-foreground">
-          {t("items.fileCount", { count: folder.count })}
-          {folder.subfoldersCount > 0 ? ` · ${t("items.folderCount", { count: folder.subfoldersCount })}` : ""}
-          {Number(folder.totalSize) > 0 ? ` · ${formatBytes(format, folder.totalSize)}` : ""}
-        </p>
-        <p className="truncate text-[11px] text-muted-foreground/70">
-          {folder.updatedAt ? format.dateTime(new Date(folder.updatedAt), { dateStyle: "medium" }) : "—"}
-        </p>
-      </div>
-    </div>
+    <ItemTile
+      href={ROUTES.workspaceCollection(folder.topicId ?? "", folder.id)}
+      name={folder.name}
+      tint={folder.color || "var(--muted-foreground)"}
+      preview={<FolderIcon size={56} color={folder.color} />}
+      meta={summary}
+      actions={
+        <ItemActions itemType="folder" variant="tile" isStarred={folder.isStarred} onToggleStar={onToggleStar} onDelete={onDelete} />
+      }
+      {...selection}
+    />
   );
 };
