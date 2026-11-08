@@ -71,7 +71,7 @@ export const useNoteSession = ({
         const result = await complete(prompt, {
           selectedText,
           prompt,
-          documentContext: `Documento: ${documentFileName}`,
+          documentContext: `Document: ${documentFileName}`,
           originalNote,
           // Notes speak the reader's language, keeping the document's terms in brackets.
           responseLanguage: locale,

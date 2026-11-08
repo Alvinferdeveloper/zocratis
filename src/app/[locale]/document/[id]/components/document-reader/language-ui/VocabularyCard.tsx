@@ -110,7 +110,7 @@ export const VocabularyCard: React.FC<VocabularyCardProps> = ({
         wordLanguage,
         explanationLanguage,
         sourceLanguage,
-        documentContext: `Documento: ${documentFileName}`,
+        documentContext: `Document: ${documentFileName}`,
       });
       setDisplayExplanation(result);
       dialog.setIsFlipped(true);
