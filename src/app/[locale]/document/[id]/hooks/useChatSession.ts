@@ -20,6 +20,7 @@ interface PendingMessage {
   text: string;
   title: string;
   followUp?: ChatFollowUp;
+  subjectId?: string;
 }
 
 export interface UseChatSessionReturn {
@@ -35,7 +36,7 @@ export interface UseChatSessionReturn {
   clearContext: () => void;
   send: (question: string) => void;
   // Starts a new conversation with this question and context (asking more about an explanation).
-  askInNewConversation: (question: string, context: ChatContext) => void;
+  askInNewConversation: (question: string, context: ChatContext, subjectId: string) => void;
   retry: () => void;
   stop: () => void;
   selectConversation: (id: string) => void;
@@ -78,7 +79,7 @@ export const useChatSession = ({ documentId }: UseChatSessionOptions): UseChatSe
       pendingMessage.current = pending;
       setDraftError(null);
       try {
-        const conversation = await createConversation({ title: pending.title });
+        const conversation = await createConversation({ title: pending.title, subjectId: pending.subjectId });
         setConversationId(conversation.id);
       } catch (error) {
         setDraftError(error instanceof Error ? error : new Error(String(error)));
@@ -102,12 +103,13 @@ export const useChatSession = ({ documentId }: UseChatSessionOptions): UseChatSe
   );
 
   const askInNewConversation = useCallback(
-    (question: string, followUpContext: ChatContext) => {
+    (question: string, followUpContext: ChatContext, subjectId: string) => {
       setContext(null);
       startConversation({
         text: composeChatMessage(question, followUpContext),
         title: toConversationTitle(question),
         followUp: followUpContext.followUp,
+        subjectId,
       });
     },
     [startConversation]

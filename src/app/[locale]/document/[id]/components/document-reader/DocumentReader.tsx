@@ -290,8 +290,19 @@ export const DocumentReader: React.FC<DocumentReaderProps> = ({ document, reques
             : handleSaveNote({ selectedText: title, comment: "", aiResponse: markdown, color: DEFAULT_NOTE_COLOR }, null);
 
     // Asking more starts a new conversation with the region (or passage) and the explanation attached.
-    const handleAskMore = ({ question, quote, pageNumber, image, region, explanation }: ExplanationFollowUp) => {
-        chat.askInNewConversation(question, { text: quote, page: pageNumber, followUp: { image, region, explanation } });
+    const handleAskMore = ({ question, subjectId, quote, pageNumber, image, region, explanation }: ExplanationFollowUp) => {
+        chat.askInNewConversation(
+            question,
+            { text: quote, page: pageNumber, followUp: { image, region, explanation } },
+            subjectId
+        );
+        setIsChatOpen(true);
+        handleExplainCardClose();
+    };
+
+    // The conversation an earlier "ask more" started, reopened from the explanation.
+    const handleOpenFollowUp = (conversationId: string) => {
+        chat.selectConversation(conversationId);
         setIsChatOpen(true);
         handleExplainCardClose();
     };
@@ -581,6 +592,7 @@ export const DocumentReader: React.FC<DocumentReaderProps> = ({ document, reques
                 portalContainer={readerViewport}
                 onSaveNote={handleExplanationNote}
                 onAskMore={handleAskMore}
+                onOpenConversation={handleOpenFollowUp}
                 onGoToPage={(page) => navigationRef.current?.goToPage(page)}
             />
 

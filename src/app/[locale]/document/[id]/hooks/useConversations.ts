@@ -14,9 +14,10 @@ export const useConversations = (documentId: string) => {
     enabled: !!documentId,
   });
 
-  const create = useMutation<Conversation, Error, { title?: string }>({
-    mutationFn: async ({ title } = {}) => {
-      const { data } = await api.post(`/documents/${documentId}/conversations`, { title });
+  // subjectId ties a conversation to the explanation it started from ("ask more").
+  const create = useMutation<Conversation, Error, { title?: string; subjectId?: string }>({
+    mutationFn: async ({ title, subjectId } = {}) => {
+      const { data } = await api.post(`/documents/${documentId}/conversations`, { title, subjectId });
       return data;
     },
     onSuccess: () => {

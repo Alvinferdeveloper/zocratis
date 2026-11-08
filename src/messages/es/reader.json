@@ -117,7 +117,8 @@
     "cardFrontRegion": "{kind, select, table {¿Qué muestra la tabla} formula {¿Qué expresa la fórmula} image {¿Qué muestra la imagen} figure {¿Qué muestra la figura} other {¿Qué muestra el recorte}} de la pág. {page}?",
     "thinkAgain": "Pensar de nuevo",
     "askMore": "Pregunta algo más…",
-    "askMoreSend": "Preguntar en un chat nuevo"
+    "askMoreSend": "Preguntar en un chat nuevo",
+    "openConversation": "Ver conversación: {title}"
   },
   "composer": {
     "send": "Enviar",

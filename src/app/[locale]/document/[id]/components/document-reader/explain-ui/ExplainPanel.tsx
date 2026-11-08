@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowLeft, ArrowUp, Check, Layers, RefreshCw, StickyNote, X } from "lucide-react";
+import { ArrowLeft, ArrowUp, Check, Layers, MessageSquare, RefreshCw, StickyNote, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ import {
   useExplanation,
 } from "@/app/[locale]/document/[id]/hooks/useExplanation";
 import { useCreateFlashcard } from "@/app/[locale]/document/[id]/components/flashcards/hooks/useFlashcards";
+import { useFollowUpConversation } from "@/app/[locale]/document/[id]/hooks/useFollowUpConversation";
 import { FlashcardForm } from "@/app/[locale]/document/[id]/components/flashcards/components/FlashcardForm";
 import { FLASHCARD_BACK_MAX_LENGTH } from "@/app/[locale]/document/[id]/components/flashcards/lib/flashcard-limits";
 import { explanationToMarkdown, toExcerpt } from "@/app/[locale]/document/[id]/lib/explanation";
@@ -26,6 +27,8 @@ import { ComprehensionCheck } from "./ComprehensionCheck";
 // What the chat gets when the student asks more about an explanation.
 export interface ExplanationFollowUp {
   question: string;
+  // The explanation it comes from, so a later visit can open the conversation again.
+  subjectId: string;
   // Shown as the quoted context of the question: the passage, or the region's label.
   quote: string;
   pageNumber: number;
@@ -42,6 +45,7 @@ export interface ExplainPanelProps {
   onSaveNote: (markdown: string, title: string) => Promise<unknown>;
   // A question about it starts a new chat conversation, where it can go as deep as needed.
   onAskMore: (followUp: ExplanationFollowUp) => void;
+  onOpenConversation: (conversationId: string) => void;
   onGoToPage: (page: number) => void;
 }
 
@@ -53,6 +57,7 @@ export const ExplainPanel: React.FC<ExplainPanelProps> = ({
   onClose,
   onSaveNote,
   onAskMore,
+  onOpenConversation,
   onGoToPage,
 }) => {
   const t = useTranslations("reader.explain");
@@ -60,6 +65,7 @@ export const ExplainPanel: React.FC<ExplainPanelProps> = ({
   const tCards = useTranslations("flashcards");
   const explain = useExplanation(documentId, subject);
   const createCard = useCreateFlashcard(documentId);
+  const { data: followUpConversation } = useFollowUpConversation(documentId, subject.id);
   const { explanation, term, level } = explain;
   const [savedViews, setSavedViews] = useState<Set<string>>(new Set());
   const [isSavingNote, setIsSavingNote] = useState(false);
@@ -105,6 +111,7 @@ export const ExplainPanel: React.FC<ExplainPanelProps> = ({
     if (!explanation || !question.trim()) return;
     onAskMore({
       question: question.trim(),
+      subjectId: subject.id,
       quote: isRegion ? subjectLabel : subject.text,
       pageNumber: subject.pageNumber,
       image: subject.image,
@@ -253,6 +260,17 @@ export const ExplainPanel: React.FC<ExplainPanelProps> = ({
             {t("card")}
           </Button>
         </div>
+        {followUpConversation && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onOpenConversation(followUpConversation.id)}
+            className="min-w-0 justify-start"
+          >
+            <MessageSquare />
+            <span className="truncate">{t("openConversation", { title: followUpConversation.title })}</span>
+          </Button>
+        )}
         <form onSubmit={askMore} className="flex items-center gap-1.5">
           <Input
             value={question}
