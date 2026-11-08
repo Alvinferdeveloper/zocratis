@@ -243,7 +243,7 @@ A sheet of paper, not a spell: Ivory Sheet (Night Sheet at night) with a Paper E
 
 ### Workspace
 - **Documents are pages, not files.** A document is drawn as a `PaperSheet` (Ivory Sheet with ruled lines and Lift); the ochre bookmark ribbon marks one being read. Tiles hold the sheet on a tray tinted 12% with the collection color.
-- **Collections and folders share the colored folder icon** (`app/icons/Folder.tsx`), tinted with the color the user picked.
+- **Collections are book spines** (`CollectionSwatch`, a small cloth-colored bar); folders keep the folder icon, so the two levels never read as one.
 - Rows show study state, not file metadata: reading progress and when it was last opened. Size lives only in the quota.
 - The open collection and folder live in the URL (`?topic=&folder=`).
 - Uploads start at once and report per-file progress in a corner tray (Float); dragging files over the window shows the scrim with where they will land.
