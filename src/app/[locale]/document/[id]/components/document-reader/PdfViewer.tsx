@@ -35,7 +35,7 @@ const NO_REGIONS: DocumentRegion[] = [];
 export interface PdfHighlightItem {
     id: string;
     color: string;
-    // An explained passage: underlined in ink instead of filled with the note color.
+    // An explained passage: a light ink tint and underline instead of the note color.
     variant?: "explanation";
     selectedText: string;
     pageNumber: number;
@@ -146,7 +146,10 @@ const HighlightContainer = ({ onClick }: { onClick: (highlight: ViewportHighligh
     const highlightWithColor = highlight as ViewportHighlight & { color?: string; variant?: "explanation" };
     const style =
         highlightWithColor.variant === "explanation"
-            ? { background: "transparent", borderBottom: "1.5px dotted var(--primary)" }
+            ? {
+                  background: "color-mix(in oklch, var(--primary) 26%, transparent)",
+                  borderBottom: "2px solid var(--primary)",
+              }
             : { background: highlightWithColor.color };
 
     return (
