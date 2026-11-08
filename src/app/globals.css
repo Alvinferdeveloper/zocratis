@@ -2,6 +2,8 @@
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
+/* Controls revealed on hover stay visible on touch screens, which can't hover. */
+@custom-variant can-hover (@media (hover: hover) and (pointer: fine));
 
 /* Cap `.container` at 1280px instead of Tailwind's default growth to 1536px at very
    wide viewports, so the landing page reads the same on any wide screen/window
