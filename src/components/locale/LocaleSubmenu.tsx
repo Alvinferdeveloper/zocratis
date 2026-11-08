@@ -1,10 +1,11 @@
 "use client";
 
-import { Check, Languages } from "lucide-react";
+import { Languages } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
-  DropdownMenuItem,
   DropdownMenuPortal,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
@@ -20,17 +21,18 @@ export const LocaleSubmenu: React.FC = () => {
   return (
     <DropdownMenuSub>
       <DropdownMenuSubTrigger>
-        <Languages className="mr-2 h-4 w-4" />
+        <Languages className="mr-2 size-4 text-muted-foreground" />
         <span>{t("label")}</span>
       </DropdownMenuSubTrigger>
       <DropdownMenuPortal>
-        <DropdownMenuSubContent>
-          {locales.map((option) => (
-            <DropdownMenuItem key={option} onSelect={() => switchLocale(option)}>
-              {LOCALE_LABELS[option]}
-              {option === locale && <Check className="ml-auto size-4" />}
-            </DropdownMenuItem>
-          ))}
+        <DropdownMenuSubContent className="w-40">
+          <DropdownMenuRadioGroup value={locale}>
+            {locales.map((option) => (
+              <DropdownMenuRadioItem key={option} value={option} onSelect={() => switchLocale(option)}>
+                {LOCALE_LABELS[option]}
+              </DropdownMenuRadioItem>
+            ))}
+          </DropdownMenuRadioGroup>
         </DropdownMenuSubContent>
       </DropdownMenuPortal>
     </DropdownMenuSub>

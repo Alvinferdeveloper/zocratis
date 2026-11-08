@@ -42,13 +42,12 @@
     "renewSoon": "pronto"
   },
   "userMenu": {
+    "open": "Abrir menú de cuenta",
     "avatarAlt": "Tu foto de perfil",
     "currentPlan": "Plan actual",
     "aiCredits": "Créditos de IA",
     "creditsUnlimited": "Ilimitados",
     "creditsRenew": "Se renuevan {when}",
-    "profile": "Perfil",
-    "settings": "Configuración",
     "logOut": "Cerrar sesión"
   }
 }

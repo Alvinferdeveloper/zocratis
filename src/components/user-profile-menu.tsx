@@ -1,16 +1,17 @@
 "use client"
 
 import * as React from "react"
-import { Moon, Sun, User, Settings, LogOut, CreditCard } from "lucide-react"
+import { Moon, Sun, LogOut, CreditCard } from "lucide-react"
 import { useTheme } from "next-themes"
 import { useTranslations } from "next-intl"
 
-import { Button } from "@/components/ui/button"
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuLabel,
+    DropdownMenuRadioGroup,
+    DropdownMenuRadioItem,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
     DropdownMenuSub,
@@ -27,16 +28,17 @@ import { ROUTES } from "@/config/routes"
 import { LocaleSubmenu } from "@/components/locale/LocaleSubmenu"
 import { UsageSummary } from "@/components/usage-summary"
 
+const THEMES = ["light", "dark", "system"] as const;
+
+const getInitials = (name = "U") =>
+    name.split(" ").map((part) => part[0]).slice(0, 2).join("").toUpperCase();
+
 export function UserProfileMenu() {
     const t = useTranslations("common");
-    const { setTheme } = useTheme();
-    const { data: session, } = useAuth();
+    const { theme, setTheme } = useTheme();
+    const { data: session } = useAuth();
     const { data: usage, refetch: refetchUsage } = useUsage();
     const router = useRouter();
-
-    const getInitials = (name = 'U') => {
-        return name.split(" ").map((n) => n[0]).join("");
-    }
 
     const handleLogOut = () => {
         authClient.signOut({
@@ -51,69 +53,57 @@ export function UserProfileMenu() {
     return (
         // Actions refresh usage themselves; reopening also catches a renewal that happened meanwhile.
         <DropdownMenu onOpenChange={(open) => open && refetchUsage()}>
-            <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="relative size-10 overflow-hidden border border-border/50 hover:border-primary/50">
-                    <Avatar className="h-10 w-10">
-                        <AvatarImage src={session?.user?.image || undefined} alt={t("userMenu.avatarAlt")} />
-                        <AvatarFallback className="bg-primary/10 text-primary font-medium">{getInitials(session?.user?.name)}</AvatarFallback>
-                    </Avatar>
-                </Button>
+            <DropdownMenuTrigger
+                aria-label={t("userMenu.open")}
+                className="press-feedback rounded-full outline-none ring-offset-2 ring-offset-background focus-visible:ring-2 focus-visible:ring-ring"
+            >
+                <Avatar className="border border-border">
+                    <AvatarImage src={session?.user?.image || undefined} alt={t("userMenu.avatarAlt")} />
+                    <AvatarFallback className="bg-primary/10 text-xs font-medium text-primary">{getInitials(session?.user?.name)}</AvatarFallback>
+                </Avatar>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56" align="start" side="right" sideOffset={10}>
+            <DropdownMenuContent className="w-60" align="end" sideOffset={8}>
                 <DropdownMenuLabel className="font-normal">
-                    <div className="flex flex-col space-y-1">
-                        <p className="text-sm font-medium leading-none">{session?.user?.name}</p>
-                        <p className="text-xs leading-none text-muted-foreground">
-                            {session?.user?.email}
-                        </p>
+                    <div className="flex flex-col gap-1">
+                        <p className="truncate text-sm font-medium leading-none">{session?.user?.name}</p>
+                        <p className="truncate text-xs leading-none text-muted-foreground">{session?.user?.email}</p>
                     </div>
                 </DropdownMenuLabel>
-                
+
                 {usage && (
                     <>
                         <DropdownMenuSeparator />
                         <UsageSummary usage={usage} />
                     </>
                 )}
-                
+
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="cursor-pointer" onClick={() => router.push(ROUTES.subscription)}>
-                    <CreditCard className="mr-2 h-4 w-4" />
+                <DropdownMenuItem onSelect={() => router.push(ROUTES.subscription)}>
+                    <CreditCard />
                     <span>{t("actions.upgradePlan")}</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer">
-                    <User className="mr-2 h-4 w-4" />
-                    <span>{t("userMenu.profile")}</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer">
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>{t("userMenu.settings")}</span>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
                 <DropdownMenuSub>
-                    <DropdownMenuSubTrigger className="cursor-pointer">
-                        <Sun className="mr-2 h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                        <Moon className="absolute mr-2 h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                    <DropdownMenuSubTrigger>
+                        <Sun className="mr-2 size-4 text-muted-foreground dark:hidden" />
+                        <Moon className="mr-2 hidden size-4 text-muted-foreground dark:block" />
                         <span>{t("theme.label")}</span>
                     </DropdownMenuSubTrigger>
                     <DropdownMenuPortal>
-                        <DropdownMenuSubContent>
-                            <DropdownMenuItem onClick={() => setTheme("light")} className="cursor-pointer">
-                                {t("theme.light")}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setTheme("dark")} className="cursor-pointer">
-                                {t("theme.dark")}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setTheme("system")} className="cursor-pointer">
-                                {t("theme.system")}
-                            </DropdownMenuItem>
+                        <DropdownMenuSubContent className="w-40">
+                            <DropdownMenuRadioGroup value={theme} onValueChange={setTheme}>
+                                {THEMES.map((option) => (
+                                    <DropdownMenuRadioItem key={option} value={option}>
+                                        {t(`theme.${option}`)}
+                                    </DropdownMenuRadioItem>
+                                ))}
+                            </DropdownMenuRadioGroup>
                         </DropdownMenuSubContent>
                     </DropdownMenuPortal>
                 </DropdownMenuSub>
                 <LocaleSubmenu />
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="cursor-pointer text-destructive focus:text-destructive" onClick={handleLogOut}>
-                    <LogOut className="mr-2 h-4 w-4" />
+                <DropdownMenuItem variant="destructive" onSelect={handleLogOut}>
+                    <LogOut />
                     <span>{t("userMenu.logOut")}</span>
                 </DropdownMenuItem>
             </DropdownMenuContent>
