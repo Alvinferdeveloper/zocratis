@@ -25,10 +25,10 @@ const JPEG_QUALITY = 0.92;
 type PdfPage = Awaited<ReturnType<PdfDocument["getPage"]>>;
 
 // Redraws only the region at high resolution, instead of screenshotting the on-screen canvas.
-const renderRegion = async (page: PdfPage, region: PageRegion): Promise<string> => {
+const renderRegion = async (page: PdfPage, region: PageRegion, targetSize: number): Promise<string> => {
   const baseViewport = page.getViewport({ scale: 1 });
   const longestSide = Math.max(baseViewport.width * region.width, baseViewport.height * region.height);
-  const scale = Math.min(MAX_SCALE, TARGET_SIZE_PX / longestSide);
+  const scale = Math.min(MAX_SCALE, targetSize / longestSide);
   const viewport = page.getViewport({ scale });
 
   const canvas = document.createElement("canvas");
@@ -67,8 +67,16 @@ const extractRegionText = async (page: PdfPage, region: PageRegion): Promise<str
   return text.replace(/[ \t]+/g, " ").replace(/ ?\n ?/g, "\n").trim();
 };
 
-export const captureRegion = async (pdf: PdfDocument, region: PageRegion): Promise<RegionCapture> => {
+// A larger targetSize suits viewing the region up close; the default suits a vision model.
+export const captureRegion = async (
+  pdf: PdfDocument,
+  region: PageRegion,
+  targetSize = TARGET_SIZE_PX
+): Promise<RegionCapture> => {
   const page = await pdf.getPage(region.pageNumber);
-  const [image, text] = await Promise.all([renderRegion(page, region), extractRegionText(page, region)]);
+  const [image, text] = await Promise.all([
+    renderRegion(page, region, targetSize),
+    extractRegionText(page, region),
+  ]);
   return { image, text };
 };

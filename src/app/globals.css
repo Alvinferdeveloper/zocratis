@@ -357,16 +357,33 @@
   box-shadow: inset 0 0 0 1.5px color-mix(in oklch, var(--primary) 55%, transparent);
 }
 
-/* Above the top-right corner, so it fits even a one-line formula. */
-.region-overlay__action {
+/* Above the top-right corner, so they fit even a one-line formula. */
+.region-overlay__actions {
   position: absolute;
   top: 0;
   right: 0;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(calc(-100% - 4px));
+  transition: opacity 150ms var(--ease-out);
+}
+
+.region-overlay[data-active="true"] .region-overlay__actions,
+.region-overlay__actions:focus-within {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.region-overlay__action {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 4px;
+  min-width: 28px;
   height: 28px;
-  padding: 0 10px;
+  padding: 0 8px;
   border: 1px solid var(--border);
   border-radius: 9999px;
   background-color: var(--card);
@@ -375,21 +392,15 @@
   white-space: nowrap;
   box-shadow: var(--shadow-float);
   cursor: pointer;
-  opacity: 0;
-  pointer-events: none;
-  transform: translateY(calc(-100% - 4px));
-  transition: opacity 150ms var(--ease-out);
+}
+
+.region-overlay__action:hover {
+  background-color: var(--accent);
 }
 
 .region-overlay__action svg {
   width: 14px;
   height: 14px;
-}
-
-.region-overlay[data-active="true"] .region-overlay__action,
-.region-overlay__action:focus-visible {
-  opacity: 1;
-  pointer-events: auto;
 }
 
 .region-overlay__action:focus-visible {

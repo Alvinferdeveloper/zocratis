@@ -26,6 +26,8 @@ export interface PdfNavigation {
     clearTextMatch: () => void;
     // Scrolls to a region of a page and flashes it (the figure a chat message was about).
     showRegion: (region: PageRegion) => void;
+    // An invisible box over a region for a popover to anchor to; null if its page isn't laid out.
+    createRegionAnchor: (region: PageRegion) => HTMLElement | null;
 }
 
 const NO_REGIONS: DocumentRegion[] = [];
@@ -59,6 +61,7 @@ interface PdfViewerProps {
     // Regions the parser found, highlighted on hover with an "Explain" button.
     regions?: DocumentRegion[];
     onRegionExplain?: (region: DocumentRegion, anchor: HTMLElement | null) => void;
+    onRegionEnlarge?: (region: DocumentRegion) => void;
     viewportRef?: React.Ref<HTMLDivElement>;
     // Page to open on once pdf.js has laid out the pages; onReady fires after that, or right away without one.
     initialPage?: number;
@@ -165,6 +168,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
     onRegionSelection,
     regions = NO_REGIONS,
     onRegionExplain,
+    onRegionEnlarge,
     viewportRef,
     initialPage,
     onReady,
@@ -186,12 +190,21 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
     // The pdf.js viewer as state, so the region overlays draw once it exists.
     const [viewer, setViewer] = useState<PdfViewerHandle | null>(null);
     const tRegions = useTranslations("reader.regions");
-    const regionAriaLabels = useMemo(
+    const regionLabels = useMemo(
         () => ({
-            table: tRegions("explainTable"),
-            image: tRegions("explainImage"),
-            figure: tRegions("explainFigure"),
-            formula: tRegions("explainFormula"),
+            explain: tRegions("explain"),
+            explainAria: {
+                table: tRegions("explainTable"),
+                image: tRegions("explainImage"),
+                figure: tRegions("explainFigure"),
+                formula: tRegions("explainFormula"),
+            },
+            enlargeAria: {
+                table: tRegions("enlarge", { kind: "table" }),
+                image: tRegions("enlarge", { kind: "image" }),
+                figure: tRegions("enlarge", { kind: "figure" }),
+                formula: tRegions("enlarge", { kind: "formula" }),
+            },
         }),
         [tRegions]
     );
@@ -199,11 +212,11 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
         viewer,
         regions,
         enabled: !examMode && Boolean(onRegionExplain),
-        label: tRegions("explain"),
-        ariaLabels: regionAriaLabels,
+        labels: regionLabels,
         // Overlays are redrawn too often to anchor to, so the card gets its own box.
         onExplain: (region) =>
             onRegionExplain?.(region, viewer ? createRegionAnchor(viewer.container, toPageRegion(region)) : null),
+        onEnlarge: (region) => onRegionEnlarge?.(region),
     });
 
     useEffect(() => {
@@ -218,6 +231,10 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
             viewer.scrollPageIntoView({ pageNumber, destArray: destination });
             // pdf.js puts the destination at the very top, under the floating controls.
             if (destination) viewer.container.scrollTop -= MIN_TOP_CLEARANCE;
+        },
+        createRegionAnchor: (region) => {
+            const container = utilsRef.current?.getViewer()?.container;
+            return container ? createRegionAnchor(container, region) : null;
         },
         showRegion: (region) => {
             const viewer = utilsRef.current?.getViewer();

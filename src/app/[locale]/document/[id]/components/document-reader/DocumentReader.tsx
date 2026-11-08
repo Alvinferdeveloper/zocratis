@@ -53,6 +53,7 @@ import {
     type ExplanationFollowUp,
 } from "@/app/[locale]/document/[id]/components/document-reader/explain-ui";
 import { RegionRendererContext } from "@/app/[locale]/document/[id]/components/document-reader/chat/RegionAttachment";
+import { RegionLightbox } from "@/app/[locale]/document/[id]/components/document-reader/RegionLightbox";
 import { DEFAULT_NOTE_COLOR } from "@/app/[locale]/document/[id]/lib/note-colors";
 import { DocumentFile } from "@/app/[locale]/document/[id]/page";
 import { Annotation, BoundingRect, VocabularyEntry } from "@/app/types";
@@ -259,6 +260,13 @@ export const DocumentReader: React.FC<DocumentReaderProps> = ({ document, reques
     const { data: regionsData } = useDocumentRegions(document.id);
     const handleRegionExplain = (region: DocumentRegion, anchor: HTMLElement | null) =>
         explainRegion(toPageRegion(region), anchor, `region:${region.id}`, region.kind);
+    // A region seen up close; explaining it from there anchors the card on the page as usual.
+    const [enlargedRegion, setEnlargedRegion] = useState<DocumentRegion | null>(null);
+    const handleEnlargedExplain = (region: DocumentRegion) => {
+        setEnlargedRegion(null);
+        handleRegionExplain(region, navigationRef.current?.createRegionAnchor(toPageRegion(region)) ?? null);
+    };
+
     const handleRegionSelection = (region: PageRegion, anchor: HTMLElement | null) =>
         explainRegion(region, anchor, `crop:${region.pageNumber}:${region.left}:${region.top}:${region.width}:${region.height}`);
 
@@ -457,6 +465,7 @@ export const DocumentReader: React.FC<DocumentReaderProps> = ({ document, reques
                                 onRegionSelection={handleRegionSelection}
                                 regions={regionsData?.regions}
                                 onRegionExplain={handleRegionExplain}
+                                onRegionEnlarge={setEnlargedRegion}
                                 viewportRef={setReaderViewport}
                                 selectionTip={
                                     <div>
@@ -573,6 +582,13 @@ export const DocumentReader: React.FC<DocumentReaderProps> = ({ document, reques
                 onSaveNote={handleExplanationNote}
                 onAskMore={handleAskMore}
                 onGoToPage={(page) => navigationRef.current?.goToPage(page)}
+            />
+
+            <RegionLightbox
+                pdf={pdfDoc}
+                region={enlargedRegion}
+                onClose={() => setEnlargedRegion(null)}
+                onExplain={handleEnlargedExplain}
             />
 
             <SelectionCardPopover

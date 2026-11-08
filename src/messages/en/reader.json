@@ -137,6 +137,9 @@
     "explainTable": "Explain this table",
     "explainImage": "Explain this image",
     "explainFigure": "Explain this figure",
-    "explainFormula": "Explain this formula"
+    "explainFormula": "Explain this formula",
+    "enlarge": "{kind, select, table {Enlarge this table} formula {Enlarge this formula} image {Enlarge this image} other {Enlarge this figure}}",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out"
   }
 }
