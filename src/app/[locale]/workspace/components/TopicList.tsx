@@ -2,7 +2,7 @@ import { Link } from "@/i18n/navigation";
 import { ROUTES } from "@/config/routes";
 import { NavItem, NavItemCount } from "@/components/ui/nav-item";
 import { Topic } from "@/app/types";
-import { CollectionSwatch } from "@/app/[locale]/workspace/components/CollectionSwatch";
+import FolderIcon from "@/app/icons/Folder";
 
 interface TopicListProps {
   topics: Topic[];
@@ -15,7 +15,7 @@ export const TopicList: React.FC<TopicListProps> = ({ topics, activeTopicId }) =
       <li key={topic.id}>
         <NavItem asChild isActive={topic.id === activeTopicId}>
           <Link href={ROUTES.workspaceCollection(topic.id)}>
-            <CollectionSwatch color={topic.color} />
+            <FolderIcon size={18} color={topic.color} />
             <span className="truncate">{topic.name}</span>
             <NavItemCount>{topic.count}</NavItemCount>
           </Link>
