@@ -16,6 +16,15 @@ export interface ProductMetrics {
     examAccuracy: number | null;
     aiCards: { proposed: number; kept: number; edited: number };
     checks: { done: number; passed: number };
+    feynman: {
+      started: number;
+      attempts: number;
+      peeked: number;
+      subjects: number;
+      retriedSubjects: number;
+      improvedSubjects: number;
+      cards: number;
+    };
   };
   retention: { cohortWeek: string; users: number; retained: number[] }[];
 }

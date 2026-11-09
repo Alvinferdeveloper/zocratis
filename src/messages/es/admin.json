@@ -42,6 +42,16 @@
       "done": "Hechas",
       "passed": "Acertadas",
       "cards": "Tarjetas creadas"
+    },
+    "feynman": {
+      "title": "Enséñalo",
+      "hint": "Últimas {weeks} semanas. Mejoraron: temas reintentados cuyo último intento explica más ideas que el primero.",
+      "started": "Empezados",
+      "attempts": "Intentos enviados",
+      "peeked": "Miraron el texto",
+      "retried": "Temas reintentados",
+      "improved": "Mejoraron",
+      "cards": "Tarjetas creadas"
     }
   }
 }

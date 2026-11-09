@@ -19,6 +19,7 @@ const MetricsContent: React.FC<{ metrics: ProductMetrics }> = ({ metrics }) => {
   const t = useTranslations("admin.metrics");
   const format = useFormatter();
   const { thisWeek, period } = metrics;
+  const { feynman } = period;
 
   const percent = (value: number | null) => (value === null ? "—" : format.number(value, { style: "percent" }));
   const decimal = (value: number | null) =>
@@ -73,6 +74,22 @@ const MetricsContent: React.FC<{ metrics: ProductMetrics }> = ({ metrics }) => {
               value: percent(period.checks.done > 0 ? period.checks.passed / period.checks.done : null),
             },
             { label: t("checks.cards"), value: String(period.checks.done - period.checks.passed) },
+          ]}
+        />
+      </MetricSection>
+
+      <MetricSection title={t("feynman.title")} hint={t("feynman.hint", { weeks: RETENTION_WEEKS })}>
+        <FigureList
+          figures={[
+            { label: t("feynman.started"), value: String(feynman.started) },
+            { label: t("feynman.attempts"), value: String(feynman.attempts) },
+            { label: t("feynman.peeked"), value: percent(feynman.attempts > 0 ? feynman.peeked / feynman.attempts : null) },
+            { label: t("feynman.retried"), value: percent(feynman.subjects > 0 ? feynman.retriedSubjects / feynman.subjects : null) },
+            {
+              label: t("feynman.improved"),
+              value: percent(feynman.retriedSubjects > 0 ? feynman.improvedSubjects / feynman.retriedSubjects : null),
+            },
+            { label: t("feynman.cards"), value: String(feynman.cards) },
           ]}
         />
       </MetricSection>

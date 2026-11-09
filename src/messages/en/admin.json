@@ -42,6 +42,16 @@
       "done": "Done",
       "passed": "Passed",
       "cards": "Cards created"
+    },
+    "feynman": {
+      "title": "Teach it back",
+      "hint": "Past {weeks} weeks. Improved: retried subjects whose last attempt explains more ideas than the first.",
+      "started": "Started",
+      "attempts": "Attempts sent",
+      "peeked": "Looked at the text",
+      "retried": "Subjects retried",
+      "improved": "Improved",
+      "cards": "Cards created"
     }
   }
 }
