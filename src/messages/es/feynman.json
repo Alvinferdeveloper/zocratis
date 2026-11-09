@@ -1,0 +1,77 @@
+{
+  "ariaLabel": "Enséñalo con tus palabras",
+  "back": "Volver",
+  "trail": "{subject} · Intento {number}",
+  "score": "{mastered} de {total} ideas",
+  "subject": {
+    "passage": "«{excerpt}» · pág. {page}",
+    "region": "{kind, select, table {Tabla} formula {Fórmula} image {Imagen} figure {Figura} other {Región}} · pág. {page}",
+    "page": "Pág. {page}",
+    "pages": "Págs. {from}–{to}"
+  },
+  "home": {
+    "title": "Enséñalo",
+    "intro": "Explica con tus palabras lo que acabas de leer. Lo comparamos con el documento y te decimos qué falta.",
+    "page": "Página {page}",
+    "pageTo": "Hasta la página",
+    "pageToHint": "Hasta {max} páginas seguidas",
+    "pageToInvalid": "Elige una página entre la {from} y la {to}.",
+    "sourceProblem": {
+      "unreadable": "No pudimos leer el texto de estas páginas. Prueba con otra o selecciona una figura.",
+      "tooLong": "Es demasiado texto para una sola explicación. Prueba con menos páginas."
+    },
+    "start": "Empezar",
+    "history": "Tus intentos en este documento",
+    "attempts": "{count, plural, one {# intento} other {# intentos}}",
+    "score": "{mastered} de {total}",
+    "scoreProgress": "{first} → {last} de {total}"
+  },
+  "cover": {
+    "title": "El documento queda cerrado mientras escribes",
+    "hint": "Si te trabas, puedes mirarlo. Quedará anotado en este intento, sin penalización.",
+    "peek": "Mirar el texto",
+    "hide": "Cerrar el documento"
+  },
+  "composer": {
+    "title": "Enséñalo como si tu amigo nunca lo hubiera leído.",
+    "label": "Tu explicación",
+    "hint": "En el idioma que prefieras. Lo que no puedas decir con tus palabras es justo lo que toca repasar.",
+    "placeholderRetry": "Explícalo otra vez, de principio a fin.",
+    "submit": "Revisar mi explicación",
+    "submitting": "Revisando…"
+  },
+  "result": {
+    "yourText": "Lo que escribiste",
+    "sections": {
+      "mastered": "Lo que dominas",
+      "missing": "Lo que falta",
+      "confused": "Lo que confundiste"
+    },
+    "youSaid": "Dijiste «{quote}».",
+    "seeOnPage": "Ver en la pág. {page}",
+    "unexplainedTerms": "Usaste sin explicar",
+    "allMastered": "Lo explicaste completo.",
+    "retry": "Intentarlo de nuevo"
+  },
+  "cards": {
+    "title": "Llevar al repaso",
+    "add": "{count, plural, one {Añadir # tarjeta} other {Añadir # tarjetas}}",
+    "added": "{count, plural, one {Se añadió # tarjeta a tu repaso} other {Se añadieron # tarjetas a tu repaso}}"
+  },
+  "progress": {
+    "title": "Cómo vas",
+    "idea": "Idea",
+    "total": "Ideas explicadas",
+    "status": {
+      "mastered": "Dominada",
+      "missing": "Falta",
+      "confused": "Confundida"
+    },
+    "peeked": "{count, plural, one {En el intento {attempts} miraste el texto.} other {En los intentos {attempts} miraste el texto.}}"
+  },
+  "leave": {
+    "title": "¿Descartar lo que escribiste?",
+    "description": "Tu explicación todavía no se ha revisado y se perderá.",
+    "confirm": "Descartar"
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "ariaLabel": "Teach it back in your own words",
+  "back": "Back",
+  "trail": "{subject} · Attempt {number}",
+  "score": "{mastered} of {total} ideas",
+  "subject": {
+    "passage": "“{excerpt}” · p. {page}",
+    "region": "{kind, select, table {Table} formula {Formula} image {Image} figure {Figure} other {Region}} · p. {page}",
+    "page": "P. {page}",
+    "pages": "Pp. {from}–{to}"
+  },
+  "home": {
+    "title": "Teach it back",
+    "intro": "Explain what you just read in your own words. We compare it with the document and tell you what's missing.",
+    "page": "Page {page}",
+    "pageTo": "Up to page",
+    "pageToHint": "Up to {max} pages in a row",
+    "pageToInvalid": "Choose a page from {from} to {to}.",
+    "sourceProblem": {
+      "unreadable": "We couldn't read the text on these pages. Try another one or select a figure.",
+      "tooLong": "That's too much text for one explanation. Try fewer pages."
+    },
+    "start": "Start",
+    "history": "Your attempts in this document",
+    "attempts": "{count, plural, one {# attempt} other {# attempts}}",
+    "score": "{mastered} of {total}",
+    "scoreProgress": "{first} → {last} of {total}"
+  },
+  "cover": {
+    "title": "The document stays closed while you write",
+    "hint": "If you get stuck, you can look. It's noted on this attempt, with no penalty.",
+    "peek": "Look at the text",
+    "hide": "Close the document"
+  },
+  "composer": {
+    "title": "Teach it as if your friend had never read it.",
+    "label": "Your explanation",
+    "hint": "In whichever language you prefer. What you can't say in your own words is exactly what to review.",
+    "placeholderRetry": "Explain it again, from start to finish.",
+    "submit": "Review my explanation",
+    "submitting": "Reviewing…"
+  },
+  "result": {
+    "yourText": "What you wrote",
+    "sections": {
+      "mastered": "What you've got",
+      "missing": "What's missing",
+      "confused": "What you mixed up"
+    },
+    "youSaid": "You said “{quote}”.",
+    "seeOnPage": "See p. {page}",
+    "unexplainedTerms": "Used without explaining",
+    "allMastered": "You explained all of it.",
+    "retry": "Try again"
+  },
+  "cards": {
+    "title": "Add to review",
+    "add": "{count, plural, one {Add # card} other {Add # cards}}",
+    "added": "{count, plural, one {Added # card to your review} other {Added # cards to your review}}"
+  },
+  "progress": {
+    "title": "How it's going",
+    "idea": "Idea",
+    "total": "Ideas explained",
+    "status": {
+      "mastered": "Mastered",
+      "missing": "Missing",
+      "confused": "Mixed up"
+    },
+    "peeked": "{count, plural, one {You looked at the text on attempt {attempts}.} other {You looked at the text on attempts {attempts}.}}"
+  },
+  "leave": {
+    "title": "Discard what you wrote?",
+    "description": "Your explanation hasn't been reviewed yet and will be lost.",
+    "confirm": "Discard"
+  }
+}

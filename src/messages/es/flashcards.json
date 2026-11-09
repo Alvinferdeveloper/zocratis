@@ -36,7 +36,8 @@
     "manual": "Escrita por ti",
     "note": "De una nota",
     "vocabulary": "De tus palabras",
-    "check": "De una comprobación"
+    "check": "De una comprobación",
+    "feynman": "De cuando lo explicaste"
   },
   "words": {
     "addAll": "Agregar {count, plural, one {# palabra} other {# palabras}} al repaso",

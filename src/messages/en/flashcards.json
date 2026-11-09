@@ -36,7 +36,8 @@
     "manual": "Written by you",
     "note": "From a note",
     "vocabulary": "From your words",
-    "check": "From a check"
+    "check": "From a check",
+    "feynman": "From teaching it back"
   },
   "words": {
     "addAll": "Add {count, plural, one {# word} other {# words}} to review",

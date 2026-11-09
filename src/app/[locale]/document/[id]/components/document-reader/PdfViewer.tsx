@@ -63,6 +63,7 @@ interface PdfViewerProps {
     // Regions the parser found, highlighted on hover with an "Explain" button.
     regions?: DocumentRegion[];
     onRegionExplain?: (region: DocumentRegion, anchor: HTMLElement | null) => void;
+    onRegionTeach?: (region: DocumentRegion) => void;
     onRegionEnlarge?: (region: DocumentRegion) => void;
     viewportRef?: React.Ref<HTMLDivElement>;
     // Page to open on once pdf.js has laid out the pages; onReady fires after that, or right away without one.
@@ -177,6 +178,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
     onRegionSelection,
     regions = NO_REGIONS,
     onRegionExplain,
+    onRegionTeach,
     onRegionEnlarge,
     viewportRef,
     initialPage,
@@ -208,6 +210,12 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
                 figure: tRegions("explainFigure"),
                 formula: tRegions("explainFormula"),
             },
+            teachAria: {
+                table: tRegions("teach", { kind: "table" }),
+                image: tRegions("teach", { kind: "image" }),
+                figure: tRegions("teach", { kind: "figure" }),
+                formula: tRegions("teach", { kind: "formula" }),
+            },
             enlargeAria: {
                 table: tRegions("enlarge", { kind: "table" }),
                 image: tRegions("enlarge", { kind: "image" }),
@@ -225,6 +233,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
         // Overlays are redrawn too often to anchor to, so the card gets its own box.
         onExplain: (region) =>
             onRegionExplain?.(region, viewer ? createRegionAnchor(viewer.container, toPageRegion(region)) : null),
+        onTeach: (region) => onRegionTeach?.(region),
         onEnlarge: (region) => onRegionEnlarge?.(region),
     });
 

@@ -1,5 +1,5 @@
 
-import { ZoomIn, ZoomOut, ScanSearch, PanelLeft } from "lucide-react";
+import { GraduationCap, ZoomIn, ZoomOut, ScanSearch, PanelLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/ui/icon-button";
@@ -11,8 +11,12 @@ interface PdfControlsProps {
     numPages: number | null;
     scale: number;
     isChatOpen: boolean;
+    // While explaining from memory the chat stays out of reach.
+    isChatDisabled?: boolean;
     selectedText: string | null;
     onChatToggle: () => void;
+    isTeachOpen: boolean;
+    onTeachToggle: () => void;
     onZoomIn: () => void;
     onZoomOut: () => void;
     isThumbnailsOpen: boolean;
@@ -27,8 +31,11 @@ export const PdfControls: React.FC<PdfControlsProps> = ({
     numPages,
     scale,
     isChatOpen,
+    isChatDisabled = false,
     selectedText,
     onChatToggle,
+    isTeachOpen,
+    onTeachToggle,
     onZoomIn,
     onZoomOut,
     isThumbnailsOpen,
@@ -66,6 +73,15 @@ export const PdfControls: React.FC<PdfControlsProps> = ({
                     <IconButton size="icon-sm" label={t("zoomIn")} onClick={onZoomIn}>
                         <ZoomIn className="size-3.5" />
                     </IconButton>
+                    {!examMode && (
+                        <>
+                            <div className="h-4 w-px bg-border" />
+                            <Button variant="ghost" size="sm" aria-pressed={isTeachOpen} onClick={onTeachToggle} className="h-7">
+                                <GraduationCap className="size-3.5" />
+                                {t("teach")}
+                            </Button>
+                        </>
+                    )}
                 </div>
             </div>
 
@@ -92,6 +108,7 @@ export const PdfControls: React.FC<PdfControlsProps> = ({
                         variant={isChatOpen ? "default" : "outline"}
                         aria-pressed={isChatOpen}
                         onClick={onChatToggle}
+                        disabled={isChatDisabled}
                         className={cn("h-10 shadow-float", !isChatOpen && "bg-card/90 backdrop-blur-md")}
                     >
                         <ZocratisMark className="size-[18px]" />

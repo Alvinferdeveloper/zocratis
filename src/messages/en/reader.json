@@ -17,7 +17,8 @@
     "assistant": "AI Assistant",
     "thumbnails": "Pages, notes and vocabulary",
     "zoomOut": "Zoom out",
-    "zoomIn": "Zoom in"
+    "zoomIn": "Zoom in",
+    "teach": "Teach it back"
   },
   "thumbnails": {
     "label": "Document pages",
@@ -83,6 +84,7 @@
   "selectionPopup": {
     "chat": "Chat",
     "explain": "Explain",
+    "teach": "Teach it back",
     "note": "Note",
     "card": "Card"
   },
@@ -141,6 +143,7 @@
     "explainImage": "Explain this image",
     "explainFigure": "Explain this figure",
     "explainFormula": "Explain this formula",
+    "teach": "{kind, select, table {Explain this table in your own words} formula {Explain this formula in your own words} image {Explain this image in your own words} other {Explain this figure in your own words}}",
     "enlarge": "{kind, select, table {Enlarge this table} formula {Enlarge this formula} image {Enlarge this image} other {Enlarge this figure}}",
     "zoomIn": "Zoom in",
     "zoomOut": "Zoom out"

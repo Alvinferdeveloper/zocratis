@@ -4,6 +4,7 @@ import metadata from "./metadata.json";
 import auth from "./auth.json";
 import exam from "./exam.json";
 import flashcards from "./flashcards.json";
+import feynman from "./feynman.json";
 import notes from "./notes.json";
 import chat from "./chat.json";
 import vocabulary from "./vocabulary.json";
@@ -22,6 +23,7 @@ const messages = {
   auth,
   exam,
   flashcards,
+  feynman,
   notes,
   chat,
   vocabulary,

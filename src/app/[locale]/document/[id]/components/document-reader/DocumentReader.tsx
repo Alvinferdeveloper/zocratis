@@ -13,6 +13,9 @@ import { useAnnotationActions } from "@/app/[locale]/document/[id]/hooks/useAnno
 import { useVocabularyActions } from "@/app/[locale]/document/[id]/hooks/useVocabularyActions";
 import { useLanguageMode } from "@/app/[locale]/document/[id]/hooks/useLanguageMode";
 import { useDocumentRegions } from "@/app/[locale]/document/[id]/hooks/useDocumentRegions";
+import { useFeynmanSession } from "@/app/[locale]/document/[id]/hooks/useFeynmanSession";
+import type { FeynmanSubject } from "@/app/[locale]/document/[id]/hooks/useFeynman";
+import { passageSubject } from "@/app/[locale]/document/[id]/lib/feynman";
 import { useCreateAnnotation, useUpdateAnnotation } from "@/app/[locale]/document/[id]/hooks/useAnnotations";
 import { toAnnotationGeometry } from "@/app/[locale]/document/[id]/lib/annotation-geometry";
 import { useQuickTranslate } from "@/app/[locale]/document/[id]/hooks/useQuickTranslate";
@@ -53,6 +56,7 @@ import {
     type ExplainSelection,
     type ExplanationFollowUp,
 } from "@/app/[locale]/document/[id]/components/document-reader/explain-ui";
+import { ClosedBookCover, FeynmanPanel } from "@/app/[locale]/document/[id]/components/document-reader/feynman-ui";
 import { RegionRendererContext } from "@/app/[locale]/document/[id]/components/document-reader/chat/RegionAttachment";
 import { RegionLightbox } from "@/app/[locale]/document/[id]/components/document-reader/RegionLightbox";
 import { DEFAULT_NOTE_COLOR } from "@/app/[locale]/document/[id]/lib/note-colors";
@@ -184,11 +188,29 @@ export const DocumentReader: React.FC<DocumentReaderProps> = ({ document, reques
         selectedPage,
     });
 
-    const handleChatToggle = () => setIsChatOpen((prev) => !prev);
+    const goToPage = (page: number) => navigationRef.current?.goToPage(page);
+    const feynman = useFeynmanSession({ documentId: document.id, pdfDoc, onGoToPage: goToPage });
+
+    // The chat and the Feynman panel share the side slot.
+    const openChat = () => {
+        feynman.close();
+        setIsChatOpen(true);
+    };
+
+    const handleChatToggle = () => (isChatOpen ? setIsChatOpen(false) : openChat());
+
+    const handleTeachToggle = () => {
+        if (!feynman.isOpen) {
+            setIsChatOpen(false);
+            feynman.openHome();
+        } else if (!feynman.hasDraft) {
+            feynman.close();
+        }
+    };
 
     const handleAskAboutSelection = () => {
         if (selectedText) chat.attachContext({ text: selectedText, page: selectedPage });
-        setIsChatOpen(true);
+        openChat();
     };
 
     const handleNoteDialogOpen = () => {
@@ -327,16 +349,37 @@ export const DocumentReader: React.FC<DocumentReaderProps> = ({ document, reques
             { text: quote, page: pageNumber, followUp: { image, region, explanation } },
             subjectId
         );
-        setIsChatOpen(true);
+        openChat();
         handleExplainCardClose();
     };
 
     // The conversation an earlier "ask more" started, reopened from the explanation.
     const handleOpenFollowUp = (conversationId: string) => {
         chat.selectConversation(conversationId);
-        setIsChatOpen(true);
+        openChat();
         handleExplainCardClose();
     };
+
+    const startTeaching = (subject: FeynmanSubject) => {
+        setIsChatOpen(false);
+        handleExplainCardClose();
+        feynman.teach(subject);
+    };
+
+    const handleTeachPassage = () => {
+        if (selectedText) startTeaching(passageSubject(selectedText, selectedPage));
+    };
+
+    const handleRegionTeach = (region: DocumentRegion) =>
+        startTeaching({
+            id: `region:${region.id}`,
+            kind: "region",
+            pageNumber: region.pageNumber,
+            pageTo: null,
+            text: null,
+            region: toPageRegion(region),
+            regionKind: region.kind,
+        });
 
     const handleNoteDialogClose = () => {
         setIsNoteDialogOpen(false);
@@ -498,8 +541,11 @@ export const DocumentReader: React.FC<DocumentReaderProps> = ({ document, reques
                                 numPages={numPages}
                                 scale={scale}
                                 isChatOpen={isChatOpen}
+                                isChatDisabled={feynman.isWriting}
                                 selectedText={selectedText}
                                 onChatToggle={handleChatToggle}
+                                isTeachOpen={feynman.isOpen}
+                                onTeachToggle={handleTeachToggle}
                                 onZoomIn={zoomIn}
                                 onZoomOut={zoomOut}
                                 isThumbnailsOpen={isThumbnailsOpen}
@@ -519,12 +565,13 @@ export const DocumentReader: React.FC<DocumentReaderProps> = ({ document, reques
                                 regionMode={regionMode}
                                 onRegionSelection={handleRegionSelection}
                                 regions={regionsData?.regions}
-                                onRegionExplain={handleRegionExplain}
+                                onRegionExplain={feynman.isWriting ? undefined : handleRegionExplain}
+                                onRegionTeach={handleRegionTeach}
                                 onRegionEnlarge={setEnlargedRegion}
                                 viewportRef={setReaderViewport}
                                 selectionTip={
                                     <div>
-                                        {selectedText && !exam.enabled && !cardSelection && !explainSelection && (
+                                        {selectedText && !exam.enabled && !cardSelection && !explainSelection && !feynman.isWriting && (
                                             <div key={selectedText} className="flex flex-col items-center gap-1.5">
                                                 <QuickTranslateBubble
                                                     translation={quickTranslate.translation}
@@ -536,6 +583,7 @@ export const DocumentReader: React.FC<DocumentReaderProps> = ({ document, reques
                                                     onChatClick={handleAskAboutSelection}
                                                     onCreateNoteClick={handleNoteDialogOpen}
                                                     onExplainClick={languageMode.enabled ? handleExplainClick : handleExplainPassageClick}
+                                                    onTeachClick={handleTeachPassage}
                                                     onCreateCardClick={handleCreateCardClick}
                                                 />
                                             </div>
@@ -554,6 +602,9 @@ export const DocumentReader: React.FC<DocumentReaderProps> = ({ document, reques
                                 <ResumeNotice page={resumePage} onStartOver={startOver} onDismiss={dismissResumeNotice} />
                             )}
                         </div>
+                        {feynman.isWriting && !exam.enabled && (
+                            <ClosedBookCover isPeeking={feynman.isPeeking} onTogglePeek={feynman.togglePeek} />
+                        )}
                     </Panel>
 
                     {exam.enabled ? (
@@ -567,6 +618,21 @@ export const DocumentReader: React.FC<DocumentReaderProps> = ({ document, reques
                                         selectedPages={exam.selectedPages}
                                         pdfDoc={pdfDoc}
                                         onClose={exam.exit}
+                                    />
+                                </div>
+                            </Panel>
+                        </>
+                    ) : feynman.isOpen ? (
+                        <>
+                            <ResizeHandle />
+                            <Panel defaultSize="34" minSize="26" maxSize="50">
+                                <div className="h-full animate-in fade-in slide-in-from-right-4 duration-200 ease-[var(--ease-out)]">
+                                    <FeynmanPanel
+                                        session={feynman}
+                                        documentId={document.id}
+                                        currentPage={currentPage}
+                                        numPages={numPages}
+                                        onGoToPage={goToPage}
                                     />
                                 </div>
                             </Panel>

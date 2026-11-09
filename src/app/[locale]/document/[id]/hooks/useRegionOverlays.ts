@@ -16,6 +16,7 @@ export interface PdfViewerHandle {
 export interface RegionOverlayLabels {
   explain: string;
   explainAria: Record<RegionKind, string>;
+  teachAria: Record<RegionKind, string>;
   enlargeAria: Record<RegionKind, string>;
 }
 
@@ -25,12 +26,15 @@ interface UseRegionOverlaysOptions {
   enabled: boolean;
   labels: RegionOverlayLabels;
   onExplain: (region: DocumentRegion) => void;
+  onTeach: (region: DocumentRegion) => void;
   onEnlarge: (region: DocumentRegion) => void;
 }
 
-// lucide's Lightbulb and Maximize2; the overlay is plain DOM because pdf.js clears its pages' content on re-render.
+// lucide's Lightbulb, GraduationCap and Maximize2; the overlay is plain DOM because pdf.js clears its pages' content on re-render.
 const LIGHTBULB_SVG =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>';
+const GRADUATION_CAP_SVG =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"/><path d="M22 10v6"/><path d="M6 12.5V16a6 3 0 0 0 12 0v-3.5"/></svg>';
 const MAXIMIZE_SVG =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 3h6v6"/><path d="m21 3-7 7"/><path d="m3 21 7-7"/><path d="M9 21H3v-6"/></svg>';
 
@@ -54,13 +58,13 @@ const createButton = (icon: string, ariaLabel: string, onClick: () => void, text
   return button;
 };
 
-// Draws the detected regions over their pages and shows "Explain" and "Enlarge" on the one under the
+// Draws the detected regions over their pages and shows their actions on the one under the
 // pointer. Hover is tracked by position because the boxes let the pointer through to the text.
-export const useRegionOverlays = ({ viewer, regions, enabled, labels, onExplain, onEnlarge }: UseRegionOverlaysOptions) => {
-  const callbacksRef = useRef({ onExplain, onEnlarge });
+export const useRegionOverlays = ({ viewer, regions, enabled, labels, onExplain, onTeach, onEnlarge }: UseRegionOverlaysOptions) => {
+  const callbacksRef = useRef({ onExplain, onTeach, onEnlarge });
   useEffect(() => {
-    callbacksRef.current = { onExplain, onEnlarge };
-  }, [onExplain, onEnlarge]);
+    callbacksRef.current = { onExplain, onTeach, onEnlarge };
+  }, [onExplain, onTeach, onEnlarge]);
 
   const apply = useCallback(() => {
     const container = viewer?.container;
@@ -79,6 +83,7 @@ export const useRegionOverlays = ({ viewer, regions, enabled, labels, onExplain,
       actions.className = "region-overlay__actions";
       actions.append(
         createButton(LIGHTBULB_SVG, labels.explainAria[region.kind], () => callbacksRef.current.onExplain(region), labels.explain),
+        createButton(GRADUATION_CAP_SVG, labels.teachAria[region.kind], () => callbacksRef.current.onTeach(region)),
         createButton(MAXIMIZE_SVG, labels.enlargeAria[region.kind], () => callbacksRef.current.onEnlarge(region))
       );
 

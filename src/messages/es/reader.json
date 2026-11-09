@@ -17,7 +17,8 @@
     "assistant": "Asistente IA",
     "thumbnails": "Páginas, notas y vocabulario",
     "zoomOut": "Alejar",
-    "zoomIn": "Acercar"
+    "zoomIn": "Acercar",
+    "teach": "Enséñalo"
   },
   "thumbnails": {
     "label": "Páginas del documento",
@@ -83,6 +84,7 @@
   "selectionPopup": {
     "chat": "Chat",
     "explain": "Explicar",
+    "teach": "Enséñalo",
     "note": "Nota",
     "card": "Tarjeta"
   },
@@ -141,6 +143,7 @@
     "explainImage": "Explicar esta imagen",
     "explainFigure": "Explicar esta figura",
     "explainFormula": "Explicar esta fórmula",
+    "teach": "{kind, select, table {Explicar esta tabla con tus palabras} formula {Explicar esta fórmula con tus palabras} image {Explicar esta imagen con tus palabras} other {Explicar esta figura con tus palabras}}",
     "enlarge": "{kind, select, table {Ampliar esta tabla} formula {Ampliar esta fórmula} image {Ampliar esta imagen} other {Ampliar esta figura}}",
     "zoomIn": "Acercar",
     "zoomOut": "Alejar"
