@@ -440,6 +440,15 @@
   animation: highlight-flash 1.4s var(--ease-out) forwards;
 }
 
+/* The rectangle being dragged to crop a region (useRegionCrop). */
+.region-crop {
+  position: absolute;
+  z-index: 25;
+  pointer-events: none;
+  border: 1px dashed var(--primary);
+  background-color: color-mix(in oklch, var(--selection) 18%, transparent);
+}
+
 /* Invisible box over a region for the explanation card to anchor to (createRegionAnchor). */
 .region-anchor {
   position: absolute;
