@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useMemo, useCallback, useEffect, useImperativeHandle, useState } from "react";
+import { createContext, useContext, useRef, useMemo, useCallback, useEffect, useImperativeHandle, useState } from "react";
 import { useTranslations } from "next-intl";
 import { PdfLoader, PdfHighlighter, TextHighlight, useHighlightContainerContext, ViewportHighlight } from "react-pdf-highlighter-extended";
 import "react-pdf-highlighter-extended/dist/esm/style/PdfHighlighter.css";
@@ -144,6 +144,11 @@ const getClickedPart = (container: Element, x: number, y: number): Element => {
     return hit ?? parts[0] ?? container;
 };
 
+// The library redraws every highlight layer when selectionTip changes identity: it gets a constant, fed through context.
+const SelectionTipContext = createContext<React.ReactNode>(null);
+const SelectionTipOutlet = () => <>{useContext(SelectionTipContext)}</>;
+const SELECTION_TIP = <SelectionTipOutlet />;
+
 const HighlightContainer = ({ onClick }: { onClick: (highlight: ViewportHighlight, anchor: Element) => void }) => {
     const { highlight, isScrolledTo } = useHighlightContainerContext();
     const highlightWithColor = highlight as ViewportHighlight & { color?: string; variant?: "explanation" };
@@ -192,6 +197,9 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
     const onPageChangeRef = useRef(onPageChange);
     const initialPageRef = useRef(initialPage);
     const onReadyRef = useRef(onReady);
+    const onTextSelectionRef = useRef(onTextSelection);
+    const onRegionSelectionRef = useRef(onRegionSelection);
+    const onHighlightClickRef = useRef(onHighlightClick);
     const textMatchRequestRef = useRef(0);
 
     const { setUtils } = usePdfPageOverlay({
@@ -242,7 +250,10 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
     useEffect(() => {
         onPageChangeRef.current = onPageChange;
         onReadyRef.current = onReady;
-    }, [onPageChange, onReady]);
+        onTextSelectionRef.current = onTextSelection;
+        onRegionSelectionRef.current = onRegionSelection;
+        onHighlightClickRef.current = onHighlightClick;
+    }, [onPageChange, onReady, onTextSelection, onRegionSelection, onHighlightClick]);
 
     useImperativeHandle(navigationRef, () => ({
         goToPage: (pageNumber, destination) => {
@@ -308,15 +319,6 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
         }
     }, [scale]);
 
-    // The library snapshots selectionTip synchronously on mouseup, before our state catches up — push fresh content into the tip once it does.
-    useEffect(() => {
-        const utils = utilsRef.current;
-        const currentTip = utils?.getTip?.();
-        if (currentTip) {
-            utils.setTip({ ...currentTip, content: selectionTip });
-        }
-    }, [selectionTip]);
-
     const highlights = useMemo(() => {
         return highlightItems.map((item) => ({
             id: item.id,
@@ -349,6 +351,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
         if (selection.type === "area") {
             // In fractions of the page: the region is redrawn from the PDF, whatever the zoom.
             const { x1, y1, x2, y2, width, height, pageNumber } = position.boundingRect;
+            const onRegionSelection = onRegionSelectionRef.current;
             if (onRegionSelection && width > 0 && height > 0 && x2 > x1 && y2 > y1) {
                 const region = {
                     pageNumber,
@@ -366,7 +369,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
         const text = selection?.content?.text || "";
         if (text.length > 0) {
             const rects = position.rects || [position.boundingRect];
-            onTextSelection({
+            onTextSelectionRef.current({
                 text,
                 rects: rects.map((r: HighlightRect) => ({
                     top: r.y1,
@@ -379,61 +382,68 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
                 pageNumber: position.boundingRect.pageNumber,
             });
         }
-    }, [onTextSelection, onRegionSelection]);
+        // The library re-reads pdfScaleValue only when this changes identity; a stale one resets the zoom on resize.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [scale]);
+
+    const handleHighlightClick = useCallback(
+        (highlight: ViewportHighlight, anchor: Element) => onHighlightClickRef.current(highlight.id, anchor),
+        []
+    );
 
     return (
         // contain:paint also clips position:fixed descendants (popovers portaled here), which overflow-hidden alone doesn't.
         <div ref={viewportRef} className="flex-1 overflow-hidden bg-reader-canvas relative [contain:paint]">
-            <PdfLoader
-                document={publicUrl}
-                beforeLoad={() => <PdfSkeleton />}
-                workerSrc="https://unpkg.com/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs"
-            >
-                {(pdfDoc) => {
-                    if (numPagesRef.current !== pdfDoc.numPages) {
-                        numPagesRef.current = pdfDoc.numPages;
-                        setTimeout(() => {
-                            setNumPages(pdfDoc.numPages);
-                            if (onPdfLoad) onPdfLoad(pdfDoc);
-                        }, 0);
-                    }
-                    return (
-                        <PdfHighlighter
-                            pdfScaleValue={scale}
-                            pdfDocument={pdfDoc}
-                            enableAreaSelection={enableAreaSelection}
-                            highlights={highlights}
-                            onSelection={handleSelection}
-                            selectionTip={selectionTip}
-                            utilsRef={(utils) => {
-                                utilsRef.current = utils;
-                                setUtils(utils);
-                                const viewer = utils?.getViewer();
-                                // Called while the library renders: the state update waits until it ends.
-                                if (viewer) queueMicrotask(() => setViewer((current) => current ?? viewer));
-                                if (viewer?.eventBus && !eventBusAttachedRef.current) {
-                                    eventBusAttachedRef.current = true;
-                                    viewer.eventBus.on("pagechanging", (evt: { pageNumber: number }) => {
-                                        onPageChangeRef.current(evt.pageNumber);
-                                    });
-                                    const openInitialPage = () => {
-                                        const page = initialPageRef.current;
-                                        if (page && page > 1 && page <= viewer.pagesCount) viewer.currentPageNumber = page;
-                                        onReadyRef.current?.();
-                                    };
-                                    // The library calls utilsRef while rendering; the page change and onReady update the reader's state, so wait until it ends.
-                                    if (viewer.pagesCount > 0) queueMicrotask(openInitialPage);
-                                    else viewer.eventBus.on("pagesinit", openInitialPage, { once: true });
-                                }
-                            }}
-                        >
-                            <HighlightContainer onClick={(highlight: ViewportHighlight, anchor: Element) => {
-                                onHighlightClick(highlight.id, anchor);
-                            }} />
-                        </PdfHighlighter>
-                    );
-                }}
-            </PdfLoader>
+            <SelectionTipContext.Provider value={selectionTip}>
+                <PdfLoader
+                    document={publicUrl}
+                    beforeLoad={() => <PdfSkeleton />}
+                    workerSrc="https://unpkg.com/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs"
+                >
+                    {(pdfDoc) => {
+                        if (numPagesRef.current !== pdfDoc.numPages) {
+                            numPagesRef.current = pdfDoc.numPages;
+                            setTimeout(() => {
+                                setNumPages(pdfDoc.numPages);
+                                if (onPdfLoad) onPdfLoad(pdfDoc);
+                            }, 0);
+                        }
+                        return (
+                            <PdfHighlighter
+                                pdfScaleValue={scale}
+                                pdfDocument={pdfDoc}
+                                enableAreaSelection={enableAreaSelection}
+                                highlights={highlights}
+                                onSelection={handleSelection}
+                                selectionTip={SELECTION_TIP}
+                                utilsRef={(utils) => {
+                                    utilsRef.current = utils;
+                                    setUtils(utils);
+                                    const viewer = utils?.getViewer();
+                                    // Called while the library renders: the state update waits until it ends.
+                                    if (viewer) queueMicrotask(() => setViewer((current) => current ?? viewer));
+                                    if (viewer?.eventBus && !eventBusAttachedRef.current) {
+                                        eventBusAttachedRef.current = true;
+                                        viewer.eventBus.on("pagechanging", (evt: { pageNumber: number }) => {
+                                            onPageChangeRef.current(evt.pageNumber);
+                                        });
+                                        const openInitialPage = () => {
+                                            const page = initialPageRef.current;
+                                            if (page && page > 1 && page <= viewer.pagesCount) viewer.currentPageNumber = page;
+                                            onReadyRef.current?.();
+                                        };
+                                        // The library calls utilsRef while rendering; the page change and onReady update the reader's state, so wait until it ends.
+                                        if (viewer.pagesCount > 0) queueMicrotask(openInitialPage);
+                                        else viewer.eventBus.on("pagesinit", openInitialPage, { once: true });
+                                    }
+                                }}
+                            >
+                                <HighlightContainer onClick={handleHighlightClick} />
+                            </PdfHighlighter>
+                        );
+                    }}
+                </PdfLoader>
+            </SelectionTipContext.Provider>
         </div>
     );
 };

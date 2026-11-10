@@ -465,26 +465,31 @@ export const DocumentReader: React.FC<DocumentReaderProps> = ({ document, reques
     // Explanations kept on the page aren't notes: they stay out of the Notes tab.
     const sidebarNotes = useMemo(() => annotations.filter((annotation) => annotation.origin !== "explanation"), [annotations]);
 
-    const activeHighlights: PdfHighlightItem[] = languageMode.enabled
-        ? vocabularyEntries.map((entry) => ({
-              id: entry.id,
-              color: entry.color,
-              selectedText: entry.selectedText,
-              pageNumber: entry.pageNumber,
-              boundingRect: entry.boundingRect,
-              rects: entry.rects,
-          }))
-        : annotations
-              .filter((annotation): annotation is Annotation & { boundingRect: BoundingRect } => annotation.boundingRect !== null)
-              .map((annotation) => ({
-                  id: annotation.id,
-                  color: annotation.color,
-                  variant: annotation.origin === "explanation" ? ("explanation" as const) : undefined,
-                  selectedText: annotation.selectedText,
-                  pageNumber: annotation.pageNumber,
-                  boundingRect: annotation.boundingRect,
-                  rects: annotation.rects,
-              }));
+    // Memoized: the viewer redraws every highlight layer when this list changes identity.
+    const activeHighlights = useMemo<PdfHighlightItem[]>(
+        () =>
+            languageMode.enabled
+                ? vocabularyEntries.map((entry) => ({
+                      id: entry.id,
+                      color: entry.color,
+                      selectedText: entry.selectedText,
+                      pageNumber: entry.pageNumber,
+                      boundingRect: entry.boundingRect,
+                      rects: entry.rects,
+                  }))
+                : annotations
+                      .filter((annotation): annotation is Annotation & { boundingRect: BoundingRect } => annotation.boundingRect !== null)
+                      .map((annotation) => ({
+                          id: annotation.id,
+                          color: annotation.color,
+                          variant: annotation.origin === "explanation" ? ("explanation" as const) : undefined,
+                          selectedText: annotation.selectedText,
+                          pageNumber: annotation.pageNumber,
+                          boundingRect: annotation.boundingRect,
+                          rects: annotation.rects,
+                      })),
+        [languageMode.enabled, vocabularyEntries, annotations]
+    );
 
     const handleHighlightClick = (id: string, anchor: Element) => {
         if (languageMode.enabled) {
