@@ -338,6 +338,24 @@
   animation: highlight-flash 1.4s var(--ease-out);
 }
 
+/* The text selection is painted by useSelectionPainter, one box per line, instead of the browser's box per span. */
+.pdf-viewer-scroll .textLayer ::selection {
+  background: transparent;
+}
+
+.selection-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+}
+
+/* Opaque and multiplied onto the white page, so the selected text stays crisp. */
+.selection-part {
+  position: absolute;
+  background-color: color-mix(in oklch, var(--info) 35%, white);
+}
+
 /* Set by useHighlightPointer while the pointer is over a highlight: a click there opens it. */
 [data-over-highlight="true"] .textLayer,
 [data-over-highlight="true"] .textLayer * {

@@ -1,36 +1,60 @@
 import type { SelectionRect, TextSelection } from "@/app/[locale]/document/[id]/hooks/useTextSelection";
 
-interface Box {
+// A rectangle in pixels of its page at the current zoom.
+export interface Box {
   left: number;
   top: number;
   right: number;
   bottom: number;
 }
 
-const findPage = (node: Node): HTMLElement | null =>
-  (node instanceof Element ? node : node.parentElement)?.closest<HTMLElement>(".page") ?? null;
+const getHeight = (box: Box) => box.bottom - box.top;
 
-// Boxes of the selected text only: a range's own rects also include pdf.js's helper elements.
-const getTextRects = (range: Range): DOMRect[] => {
+// The part of a text node the range covers, as wide as the covered text and as tall as its pdf.js span.
+const getNodeRect = (node: Text, span: Element, range: Range): { left: number; right: number; top: number; bottom: number } | null => {
+  const line = span.getBoundingClientRect();
+  if (line.width === 0 || line.height === 0) return null;
+  if (node !== range.startContainer && node !== range.endContainer) return line;
+
+  const part = document.createRange();
+  part.setStart(node, node === range.startContainer ? range.startOffset : 0);
+  part.setEnd(node, node === range.endContainer ? range.endOffset : node.length);
+  const covered = part.getBoundingClientRect();
+  return covered.width === 0 ? null : { left: covered.left, right: covered.right, top: line.top, bottom: line.bottom };
+};
+
+// The selected text's boxes on each page. Only text layers count: a range's own rects also include
+// pdf.js's helper elements and anything else inside the viewer.
+const collectBoxes = (range: Range): Map<HTMLElement, Box[]> => {
+  const pages = new Map<HTMLElement, Box[]>();
+  const origins = new Map<HTMLElement, { x: number; y: number }>();
   const root = range.commonAncestorContainer;
-  if (root instanceof Text) return Array.from(range.getClientRects());
-
-  const rects: DOMRect[] = [];
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
-    if (!range.intersectsNode(node)) continue;
-    const part = document.createRange();
-    part.selectNodeContents(node);
-    if (node === range.startContainer) part.setStart(node, range.startOffset);
-    if (node === range.endContainer) part.setEnd(node, range.endOffset);
-    rects.push(...part.getClientRects());
+
+  // A walker never returns its own root, which is the whole selection when it sits inside one text node.
+  for (let node = root instanceof Text ? root : walker.nextNode(); node; node = walker.nextNode()) {
+    const span = node.parentElement;
+    const page = span?.closest(".textLayer")?.closest<HTMLElement>(".page");
+    if (!span || !page || !range.intersectsNode(node)) continue;
+    const rect = getNodeRect(node as Text, span, range);
+    if (!rect) continue;
+
+    let origin = origins.get(page);
+    if (!origin) {
+      const bounds = page.getBoundingClientRect();
+      origins.set(page, (origin = { x: bounds.left + page.clientLeft, y: bounds.top + page.clientTop }));
+    }
+    const box = { left: rect.left - origin.x, top: rect.top - origin.y, right: rect.right - origin.x, bottom: rect.bottom - origin.y };
+    const boxes = pages.get(page);
+    if (boxes) boxes.push(box);
+    else pages.set(page, [box]);
   }
-  return rects;
+  return pages;
 };
 
 // Two boxes share a line when they overlap vertically by more than half of the shorter one.
 const onSameLine = (a: Box, b: Box): boolean =>
-  Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > Math.min(a.bottom - a.top, b.bottom - b.top) / 2;
+  Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > Math.min(getHeight(a), getHeight(b)) / 2;
 
 // One box per line (and per column): pdf.js draws a span per run of text, which leaves gaps and overlaps.
 const mergeByLine = (boxes: Box[]): Box[] => {
@@ -46,7 +70,7 @@ const mergeByLine = (boxes: Box[]): Box[] => {
     for (const box of line.sort((a, b) => a.left - b.left)) {
       const last = merged[merged.length - 1];
       // A gap wider than the line is tall is another column, not a space between words.
-      if (last && box.left - last.right <= last.bottom - last.top) {
+      if (last && box.left - last.right <= getHeight(last)) {
         last.right = Math.max(last.right, box.right);
         last.top = Math.min(last.top, box.top);
         last.bottom = Math.max(last.bottom, box.bottom);
@@ -58,41 +82,41 @@ const mergeByLine = (boxes: Box[]): Box[] => {
   });
 };
 
-// The selection inside the viewer as the reader stores it: its text and its boxes on the page it starts on,
-// in pixels of that page at the current zoom. Null when nothing in the viewer is selected.
-export const readSelection = (selection: Selection, container: HTMLElement): TextSelection | null => {
-  if (selection.isCollapsed || selection.rangeCount === 0) return null;
+// Stretches each line down to the next one in its column, so a paragraph reads as one block without stripes.
+const closeLineGaps = (lines: Box[]): Box[] => {
+  const sorted = [...lines].sort((a, b) => a.top - b.top);
+  sorted.forEach((line, index) => {
+    const next = sorted.slice(index + 1).find((below) => below.top >= line.top && below.left < line.right && below.right > line.left);
+    // A gap taller than the line is a paragraph break, which stays open.
+    if (next && next.top > line.bottom && next.top - line.bottom < getHeight(line)) line.bottom = next.top;
+  });
+  return sorted;
+};
+
+// The selection's boxes, one per line, on each page it touches. Empty when nothing in the viewer is selected.
+export const readSelectionBoxes = (selection: Selection, container: HTMLElement): Map<HTMLElement, Box[]> => {
+  if (selection.isCollapsed || selection.rangeCount === 0) return new Map();
   const range = selection.getRangeAt(0);
-  if (!container.contains(range.commonAncestorContainer)) return null;
+  if (!container.contains(range.commonAncestorContainer)) return new Map();
 
-  const page = findPage(range.startContainer) ?? findPage(range.endContainer);
+  const pages = collectBoxes(range);
+  pages.forEach((boxes, page) => pages.set(page, closeLineGaps(mergeByLine(boxes))));
+  return pages;
+};
+
+// The selection as the reader stores it: its text and its boxes on the page it starts on, in pixels of
+// that page at the current zoom. Null when nothing in the viewer is selected.
+export const readSelection = (selection: Selection, container: HTMLElement): TextSelection | null => {
   const text = selection.toString().replace(/\n/g, " ").trim();
-  if (!page || !text) return null;
+  const [first] = readSelectionBoxes(selection, container);
+  if (!text || !first) return null;
 
-  const bounds = page.getBoundingClientRect();
-  const originX = bounds.left + page.clientLeft;
-  const originY = bounds.top + page.clientTop;
-  const boxes = getTextRects(range)
-    .filter((rect) => rect.width > 0 && rect.height > 0)
-    .map((rect) => ({
-      left: rect.left - originX,
-      top: rect.top - originY,
-      right: rect.right - originX,
-      bottom: rect.bottom - originY,
-    }))
-    // Keeps the boxes on this page; a selection running into the next one is cut at the page's end.
-    .filter((box) => {
-      const centerX = (box.left + box.right) / 2;
-      const centerY = (box.top + box.bottom) / 2;
-      return centerX >= 0 && centerX <= page.clientWidth && centerY >= 0 && centerY <= page.clientHeight;
-    });
-  if (boxes.length === 0) return null;
-
-  const rects: SelectionRect[] = mergeByLine(boxes).map((box) => ({
+  const [page, boxes] = first;
+  const rects: SelectionRect[] = boxes.map((box) => ({
     left: box.left,
     top: box.top,
     width: box.right - box.left,
-    height: box.bottom - box.top,
+    height: getHeight(box),
     pageWidth: page.clientWidth,
     pageHeight: page.clientHeight,
   }));

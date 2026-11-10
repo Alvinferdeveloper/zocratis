@@ -18,6 +18,7 @@ import { usePdfDocument } from "@/app/[locale]/document/[id]/hooks/usePdfDocumen
 import { usePdfSelection } from "@/app/[locale]/document/[id]/hooks/usePdfSelection";
 import { usePdfViewer } from "@/app/[locale]/document/[id]/hooks/usePdfViewer";
 import { useRegionCrop } from "@/app/[locale]/document/[id]/hooks/useRegionCrop";
+import { useSelectionPainter } from "@/app/[locale]/document/[id]/hooks/useSelectionPainter";
 import type { TextSelection } from "@/app/[locale]/document/[id]/hooks/useTextSelection";
 import type { PdfDestination } from "@/app/[locale]/document/[id]/lib/pdf-outline";
 import { clearSearchHighlight, findTextLayerRange, showSearchHighlight } from "@/app/[locale]/document/[id]/lib/text-layer-highlight";
@@ -133,6 +134,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
     const pdfDocument = usePdfDocument(publicUrl);
     const viewer = usePdfViewer({ container, pdfDocument, scale, initialPage, onPageChange, onReady });
     const selection = usePdfSelection(container, onTextSelection);
+    useSelectionPainter(viewer);
     const textMatchRequestRef = useRef(0);
 
     useEffect(() => {
