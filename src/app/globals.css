@@ -374,10 +374,11 @@
   fill: color-mix(in oklch, var(--info) 35%, white);
 }
 
-/* Set by useHighlightPointer while the pointer is over a highlight: a click there opens it. */
-[data-over-highlight="true"] .textLayer,
-[data-over-highlight="true"] .textLayer * {
-  cursor: pointer;
+/* Set by useHighlightPointer while the pointer is over a highlight: a click there opens it.
+   Forced, because every layer pdf.js stacks on a page sets its own cursor. */
+[data-over-highlight="true"],
+[data-over-highlight="true"] * {
+  cursor: pointer !important;
 }
 
 @keyframes highlight-flash {

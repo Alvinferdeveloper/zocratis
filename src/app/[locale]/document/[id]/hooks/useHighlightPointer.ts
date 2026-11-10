@@ -22,7 +22,6 @@ export const useHighlightPointer = ({ container, highlightsByPage, enabled, onCl
 
   useEffect(() => {
     if (!container || !enabled) return;
-    let frame = 0;
 
     const findUnder = (event: MouseEvent): { id: string; page: HTMLElement } | null => {
       const page = (event.target as Element).closest<HTMLElement>(".page");
@@ -43,19 +42,22 @@ export const useHighlightPointer = ({ container, highlightsByPage, enabled, onCl
       if (hit && anchor) latest.current.onClick(hit.id, anchor);
     };
     const handleMove = (event: MouseEvent) => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        container.dataset.overHighlight = String(Boolean(findUnder(event)));
-      });
+      // A pressed button is a selection being dragged across the highlight, not a hover.
+      const isOver = String(event.buttons === 0 && Boolean(findUnder(event)));
+      if (container.dataset.overHighlight !== isOver) container.dataset.overHighlight = isOver;
+    };
+    const handleLeave = () => {
+      container.dataset.overHighlight = "false";
     };
 
     container.addEventListener("click", handleClick);
     container.addEventListener("mousemove", handleMove);
+    container.addEventListener("mouseleave", handleLeave);
     return () => {
-      cancelAnimationFrame(frame);
       delete container.dataset.overHighlight;
       container.removeEventListener("click", handleClick);
       container.removeEventListener("mousemove", handleMove);
+      container.removeEventListener("mouseleave", handleLeave);
     };
   }, [container, enabled]);
 };
