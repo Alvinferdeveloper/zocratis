@@ -52,6 +52,14 @@
       "retried": "Subjects retried",
       "improved": "Improved",
       "cards": "Cards created"
+    },
+    "formula": {
+      "title": "Formulas in layers",
+      "hint": "Past {weeks} weeks. How often each layer is reached.",
+      "explained": "Formulas explained",
+      "intuition": "Opened the intuition",
+      "example": "Opened the example",
+      "definition": "Looked up a definition"
     }
   }
 }

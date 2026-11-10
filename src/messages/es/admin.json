@@ -52,6 +52,14 @@
       "retried": "Temas reintentados",
       "improved": "Mejoraron",
       "cards": "Tarjetas creadas"
+    },
+    "formula": {
+      "title": "Fórmulas por capas",
+      "hint": "Últimas {weeks} semanas. Cuántas veces se llega a cada capa.",
+      "explained": "Fórmulas explicadas",
+      "intuition": "Abrieron la intuición",
+      "example": "Abrieron el ejemplo",
+      "definition": "Consultaron una definición"
     }
   }
 }

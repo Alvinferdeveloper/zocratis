@@ -93,6 +93,17 @@ const MetricsContent: React.FC<{ metrics: ProductMetrics }> = ({ metrics }) => {
           ]}
         />
       </MetricSection>
+
+      <MetricSection title={t("formula.title")} hint={t("formula.hint", { weeks: RETENTION_WEEKS })}>
+        <FigureList
+          figures={[
+            { label: t("formula.explained"), value: String(period.formula.explained) },
+            { label: t("formula.intuition"), value: String(period.formula.intuition) },
+            { label: t("formula.example"), value: String(period.formula.example) },
+            { label: t("formula.definition"), value: String(period.formula.definition) },
+          ]}
+        />
+      </MetricSection>
     </>
   );
 };

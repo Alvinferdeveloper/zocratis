@@ -25,6 +25,7 @@ export interface ProductMetrics {
       improvedSubjects: number;
       cards: number;
     };
+    formula: { explained: number; intuition: number; example: number; definition: number };
   };
   retention: { cohortWeek: string; users: number; retained: number[] }[];
 }
