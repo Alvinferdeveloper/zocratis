@@ -124,6 +124,20 @@
     "convertToNote": "Convertir en nota",
     "convertedToNote": "Convertida en nota"
   },
+  "formula": {
+    "viewLayers": "Ver por capas",
+    "symbols": "Símbolos",
+    "page": "pág. {page}",
+    "notDefined": "Sin definición en el documento",
+    "showDefinition": "Ver dónde se define {symbol}, en la pág. {page}",
+    "goToPage": "Ir a la pág. {page}",
+    "intuition": "Intuición",
+    "revealIntuition": "Ver la intuición",
+    "example": "Ejemplo con números",
+    "revealExample": "Ver un ejemplo con números",
+    "cardFront": "¿Qué expresa la fórmula de la pág. {page}?",
+    "returnToFormula": "Volver a la fórmula"
+  },
   "composer": {
     "send": "Enviar",
     "stop": "Detener"

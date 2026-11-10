@@ -124,6 +124,20 @@
     "convertToNote": "Turn into a note",
     "convertedToNote": "Turned into a note"
   },
+  "formula": {
+    "viewLayers": "See in layers",
+    "symbols": "Symbols",
+    "page": "p. {page}",
+    "notDefined": "Not defined in the document",
+    "showDefinition": "See where {symbol} is defined, on p. {page}",
+    "goToPage": "Go to p. {page}",
+    "intuition": "Intuition",
+    "revealIntuition": "See the intuition",
+    "example": "Example with numbers",
+    "revealExample": "See an example with numbers",
+    "cardFront": "What does the formula on p. {page} express?",
+    "returnToFormula": "Back to the formula"
+  },
   "composer": {
     "send": "Send",
     "stop": "Stop"

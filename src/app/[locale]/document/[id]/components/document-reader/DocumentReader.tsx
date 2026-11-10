@@ -16,6 +16,7 @@ import { useDocumentRegions } from "@/app/[locale]/document/[id]/hooks/useDocume
 import { useFeynmanSession } from "@/app/[locale]/document/[id]/hooks/useFeynmanSession";
 import type { FeynmanSubject } from "@/app/[locale]/document/[id]/hooks/useFeynman";
 import { passageSubject } from "@/app/[locale]/document/[id]/lib/feynman";
+import { boundingRectToRegion, selectionToRegion } from "@/app/[locale]/document/[id]/lib/formula";
 import { useCreateAnnotation, useUpdateAnnotation } from "@/app/[locale]/document/[id]/hooks/useAnnotations";
 import { toAnnotationGeometry } from "@/app/[locale]/document/[id]/lib/annotation-geometry";
 import { useQuickTranslate } from "@/app/[locale]/document/[id]/hooks/useQuickTranslate";
@@ -34,6 +35,7 @@ import { ResizeHandle } from "@/components/ui/resize-handle";
 import { Header } from "@/app/[locale]/document/[id]/components/document-reader/Header";
 import { PdfControls } from "@/app/[locale]/document/[id]/components/document-reader/PdfControls";
 import { ResumeNotice } from "@/app/[locale]/document/[id]/components/document-reader/ResumeNotice";
+import { FormulaReturnNotice } from "@/app/[locale]/document/[id]/components/document-reader/FormulaReturnNotice";
 import { PdfViewer, PdfHighlightItem, type PdfNavigation } from "@/app/[locale]/document/[id]/components/document-reader/PdfViewer";
 import { ReaderSidebar, SIDEBAR_TABS, type SidebarTab } from "@/app/[locale]/document/[id]/components/document-reader/sidebar/ReaderSidebar";
 import type { SidebarHighlight } from "@/app/[locale]/document/[id]/lib/sidebar-highlights";
@@ -246,9 +248,12 @@ export const DocumentReader: React.FC<DocumentReaderProps> = ({ document, reques
 
     // What the floating card explains: a selected passage, a detected region or a crop, with its anchor.
     const [explainSelection, setExplainSelection] = useState<ExplainSelection | null>(null);
+    // The formula left behind to read where one of its symbols is defined.
+    const [formulaToReturn, setFormulaToReturn] = useState<ExplainSelection | null>(null);
 
     const openExplanation = (selection: ExplainSelection) => {
         releaseRegionAnchor(explainSelection?.anchor);
+        setFormulaToReturn(null);
         setExplainSelection(selection);
     };
 
@@ -260,6 +265,7 @@ export const DocumentReader: React.FC<DocumentReaderProps> = ({ document, reques
             pageNumber: selectedPage,
             anchor: getSelectionAnchor(fallbackAnchor),
             selectionRects,
+            textRegion: selectionToRegion(selectionRects, selectedPage),
         });
     };
 
@@ -289,6 +295,38 @@ export const DocumentReader: React.FC<DocumentReaderProps> = ({ document, reques
     const handleEnlargedExplain = (region: DocumentRegion) => {
         setEnlargedRegion(null);
         handleRegionExplain(region, navigationRef.current?.createRegionAnchor(toPageRegion(region)) ?? null);
+    };
+
+    // A passage has to be redrawn first: the model reads formulas from the image, not the PDF's text.
+    const handleViewLayers = async () => {
+        const selection = explainSelection;
+        if (!selection) return;
+        if (selection.image) {
+            setExplainSelection({ ...selection, asFormula: true });
+            return;
+        }
+        if (!pdfDoc || !selection.textRegion) return;
+        try {
+            const { image } = await captureRegion(pdfDoc, selection.textRegion);
+            setExplainSelection({ ...selection, image, region: selection.textRegion, asFormula: true });
+        } catch (error) {
+            console.error("Failed to capture the formula", error);
+        }
+    };
+
+    const handleDefinitionJump = (page: number) => {
+        const selection = explainSelection;
+        handleExplainCardClose();
+        setFormulaToReturn(selection);
+        navigationRef.current?.goToPage(page);
+    };
+
+    const handleReturnToFormula = async () => {
+        const selection = formulaToReturn;
+        setFormulaToReturn(null);
+        if (!selection?.region) return;
+        const anchor = await navigationRef.current?.returnToRegion(selection.region);
+        if (anchor) openExplanation({ ...selection, anchor });
     };
 
     const handleRegionSelection = (region: PageRegion, anchor: HTMLElement | null) =>
@@ -460,6 +498,7 @@ export const DocumentReader: React.FC<DocumentReaderProps> = ({ document, reques
                     text: annotation.selectedText,
                     pageNumber: annotation.pageNumber,
                     anchor,
+                    textRegion: annotation.boundingRect ? boundingRectToRegion(annotation.boundingRect, annotation.pageNumber) : undefined,
                 });
             } else if (annotation) {
                 handleAnnotationClick(annotation);
@@ -601,6 +640,9 @@ export const DocumentReader: React.FC<DocumentReaderProps> = ({ document, reques
                             {isResumeNoticeOpen && resumePage && (
                                 <ResumeNotice page={resumePage} onStartOver={startOver} onDismiss={dismissResumeNotice} />
                             )}
+                            {formulaToReturn && (
+                                <FormulaReturnNotice onReturn={handleReturnToFormula} onDismiss={() => setFormulaToReturn(null)} />
+                            )}
                         </div>
                         {feynman.isWriting && !exam.enabled && (
                             <ClosedBookCover isPeeking={feynman.isPeeking} onTogglePeek={feynman.togglePeek} />
@@ -704,6 +746,8 @@ export const DocumentReader: React.FC<DocumentReaderProps> = ({ document, reques
                 onAskMore={handleAskMore}
                 onOpenConversation={handleOpenFollowUp}
                 onExplained={handleExplained}
+                onViewLayers={handleViewLayers}
+                onDefinitionJump={handleDefinitionJump}
                 noteAction={explanationMark ? "convert" : "save"}
                 onGoToPage={(page) => navigationRef.current?.goToPage(page)}
             />

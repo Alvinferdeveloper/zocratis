@@ -8,6 +8,7 @@ interface ProductEvents {
   flashcard_proposals_saved: { proposed: number; kept: number; edited: number };
   comprehension_checked: { passed: boolean };
   feynman_started: { kind: "passage" | "region" | "pages" };
+  formula_layer_opened: { layer: "intuition" | "example" | "definition" };
 }
 
 type ProductEventName = keyof ProductEvents;

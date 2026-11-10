@@ -1,56 +1,32 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, ArrowUp, Check, Layers, MessageSquare, RefreshCw, StickyNote, X } from "lucide-react";
+import { ArrowLeft, Sigma, X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { IconButton } from "@/components/ui/icon-button";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiErrorText } from "@/components/api-error-message";
-import { showApiErrorToast } from "@/components/api-error-toast";
 import { getApiErrorKey } from "@/lib/api-errors";
 import {
   type ExplainSubject,
   MAX_EXPLAIN_LEVEL,
   useExplanation,
 } from "@/app/[locale]/document/[id]/hooks/useExplanation";
-import { useCreateFlashcard } from "@/app/[locale]/document/[id]/components/flashcards/hooks/useFlashcards";
-import { useFollowUpConversation } from "@/app/[locale]/document/[id]/hooks/useFollowUpConversation";
-import { FlashcardForm } from "@/app/[locale]/document/[id]/components/flashcards/components/FlashcardForm";
-import { FLASHCARD_BACK_MAX_LENGTH } from "@/app/[locale]/document/[id]/components/flashcards/lib/flashcard-limits";
 import { explanationToMarkdown, toExcerpt } from "@/app/[locale]/document/[id]/lib/explanation";
-import type { PageRegion } from "@/app/[locale]/document/[id]/lib/region-image";
 import { ComprehensionCheck } from "./ComprehensionCheck";
+import { ExplainActions, type ExplainHandlers } from "./ExplainActions";
+import { ExplainCardForm } from "./ExplainCardForm";
 
-// What the chat gets when the student asks more about an explanation.
-export interface ExplanationFollowUp {
-  question: string;
-  // The explanation it comes from, so a later visit can open the conversation again.
-  subjectId: string;
-  // Shown as the quoted context of the question: the passage, or the region's label.
-  quote: string;
-  pageNumber: number;
-  image?: string;
-  region?: PageRegion;
-  explanation: string;
-}
-
-export interface ExplainPanelProps {
+export interface ExplainPanelProps extends ExplainHandlers {
   documentId: string;
   subject: ExplainSubject;
   onClose: () => void;
-  // The title is what heads the note: the passage, or the region's label.
-  onSaveNote: (markdown: string, title: string) => Promise<unknown>;
-  // A question about it starts a new chat conversation, where it can go as deep as needed.
-  onAskMore: (followUp: ExplanationFollowUp) => void;
-  onOpenConversation: (conversationId: string) => void;
   // Fired once the passage or region itself has an explanation (not a term), to keep it on the page.
   onExplained: () => void;
-  // A passage kept on the page turns into a note instead of saving a second one.
-  noteAction: "save" | "convert";
   onGoToPage: (page: number) => void;
+  // Set when this can be read as a formula, layer by layer.
+  onViewLayers?: () => void;
 }
 
 // One selection's explanation in the floating card: the passage or region first, then any term
@@ -65,18 +41,14 @@ export const ExplainPanel: React.FC<ExplainPanelProps> = ({
   onExplained,
   noteAction,
   onGoToPage,
+  onViewLayers,
 }) => {
   const t = useTranslations("reader.explain");
+  const tFormula = useTranslations("reader.formula");
   const tActions = useTranslations("common.actions");
-  const tCards = useTranslations("flashcards");
   const explain = useExplanation(documentId, subject);
-  const createCard = useCreateFlashcard(documentId);
-  const { data: followUpConversation } = useFollowUpConversation(documentId, subject.id);
   const { explanation, term, level } = explain;
-  const [savedViews, setSavedViews] = useState<Set<string>>(new Set());
-  const [isSavingNote, setIsSavingNote] = useState(false);
   const [isCardOpen, setIsCardOpen] = useState(false);
-  const [question, setQuestion] = useState("");
 
   const hasReportedExplanation = useRef(false);
   useEffect(() => {
@@ -86,7 +58,6 @@ export const ExplainPanel: React.FC<ExplainPanelProps> = ({
   }, [explanation, term, onExplained]);
 
   const viewKey = `${term ?? ""}#${level}`;
-  const isSaved = savedViews.has(viewKey);
   const isRegion = Boolean(subject.image);
   const regionKind = subject.regionKind ?? "crop";
   const subjectLabel = isRegion
@@ -94,44 +65,11 @@ export const ExplainPanel: React.FC<ExplainPanelProps> = ({
     : `«${toExcerpt(subject.text)}»`;
   const trail = [subjectLabel, ...explain.trail].join(" › ");
 
-  const saveNote = async () => {
-    if (!explanation) return;
-    setIsSavingNote(true);
-    try {
-      await onSaveNote(explanationToMarkdown(explanation, term), isRegion ? subjectLabel : subject.text);
-      setSavedViews((current) => new Set(current).add(viewKey));
-    } catch (error) {
-      showApiErrorToast(error);
-    } finally {
-      setIsSavingNote(false);
-    }
-  };
-
   const cardFront = term
     ? t("cardFrontTerm", { term })
     : isRegion
       ? t("cardFrontRegion", { kind: regionKind, page: subject.pageNumber })
       : t("cardFrontPassage", { excerpt: toExcerpt(subject.text) });
-
-  const saveCard = async (card: { front: string; back: string }) => {
-    await createCard.mutateAsync({ ...card, pageNumber: subject.pageNumber });
-    toast.success(tCards("selection.saved"));
-    setIsCardOpen(false);
-  };
-
-  const askMore = (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!explanation || !question.trim()) return;
-    onAskMore({
-      question: question.trim(),
-      subjectId: subject.id,
-      quote: isRegion ? subjectLabel : subject.text,
-      pageNumber: subject.pageNumber,
-      image: subject.image,
-      region: subject.region,
-      explanation: explanationToMarkdown(explanation, term),
-    });
-  };
 
   return (
     <section className="flex max-h-[min(34rem,var(--radix-popover-content-available-height))] flex-col">
@@ -238,13 +176,12 @@ export const ExplainPanel: React.FC<ExplainPanelProps> = ({
                 )}
 
                 {isCardOpen && (
-                  <FlashcardForm
-                    initial={{ front: cardFront, back: explanation.coreIdea.slice(0, FLASHCARD_BACK_MAX_LENGTH) }}
-                    submitLabel={tCards("form.save")}
-                    onSubmit={saveCard}
-                    onCancel={() => setIsCardOpen(false)}
-                    isPending={createCard.isPending}
-                    error={createCard.error}
+                  <ExplainCardForm
+                    documentId={documentId}
+                    pageNumber={subject.pageNumber}
+                    front={cardFront}
+                    back={explanation.coreIdea}
+                    onClose={() => setIsCardOpen(false)}
                   />
                 )}
               </>
@@ -253,53 +190,33 @@ export const ExplainPanel: React.FC<ExplainPanelProps> = ({
         </div>
       </div>
 
-      <footer className="flex shrink-0 flex-col gap-2 border-t border-border p-3">
-        <div className="flex flex-wrap items-center gap-1">
-          {level < MAX_EXPLAIN_LEVEL && (
-            <Button variant="outline" size="sm" onClick={explain.simplify} disabled={!explanation || explain.isLoading}>
-              {t("simplify")}
-            </Button>
-          )}
-          <Button variant="ghost" size="sm" onClick={explain.thinkAgain} disabled={!explanation || explain.isLoading}>
-            <RefreshCw />
-            {t("thinkAgain")}
-          </Button>
-          <Button variant="ghost" size="sm" onClick={saveNote} disabled={!explanation || isSaved || isSavingNote}>
-            {isSaved ? <Check /> : <StickyNote />}
-            {noteAction === "convert"
-              ? t(isSaved ? "convertedToNote" : "convertToNote")
-              : t(isSaved ? "noteSaved" : "saveNote")}
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => setIsCardOpen(true)} disabled={!explanation || isCardOpen}>
-            <Layers />
-            {t("card")}
-          </Button>
-        </div>
-        {followUpConversation && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onOpenConversation(followUpConversation.id)}
-            className="min-w-0 justify-start"
-          >
-            <MessageSquare />
-            <span className="truncate">{t("openConversation", { title: followUpConversation.title })}</span>
+      <ExplainActions
+        documentId={documentId}
+        subject={subject}
+        markdown={explanation && explanationToMarkdown(explanation, term)}
+        viewKey={viewKey}
+        title={isRegion ? subjectLabel : subject.text}
+        isBusy={explain.isLoading}
+        isCardOpen={isCardOpen}
+        onThinkAgain={explain.thinkAgain}
+        onOpenCard={() => setIsCardOpen(true)}
+        onSaveNote={onSaveNote}
+        onAskMore={onAskMore}
+        onOpenConversation={onOpenConversation}
+        noteAction={noteAction}
+      >
+        {level < MAX_EXPLAIN_LEVEL && (
+          <Button variant="outline" size="sm" onClick={explain.simplify} disabled={!explanation || explain.isLoading}>
+            {t("simplify")}
           </Button>
         )}
-        <form onSubmit={askMore} className="flex items-center gap-1.5">
-          <Input
-            value={question}
-            onChange={(event) => setQuestion(event.target.value)}
-            placeholder={t("askMore")}
-            aria-label={t("askMore")}
-            disabled={!explanation}
-            className="h-8 text-sm md:text-sm"
-          />
-          <IconButton type="submit" size="icon" variant="default" label={t("askMoreSend")} disabled={!explanation || !question.trim()}>
-            <ArrowUp />
-          </IconButton>
-        </form>
-      </footer>
+        {onViewLayers && !term && (
+          <Button variant="ghost" size="sm" onClick={onViewLayers}>
+            <Sigma />
+            {tFormula("viewLayers")}
+          </Button>
+        )}
+      </ExplainActions>
     </section>
   );
 };

@@ -28,6 +28,8 @@ export interface PdfNavigation {
     showRegion: (region: PageRegion) => void;
     // An invisible box over a region for a popover to anchor to; null if its page isn't laid out.
     createRegionAnchor: (region: PageRegion) => HTMLElement | null;
+    // Brings a region back on screen and anchors to it once its page is drawn, since drawing clears it.
+    returnToRegion: (region: PageRegion) => Promise<HTMLElement | null>;
 }
 
 const NO_REGIONS: DocumentRegion[] = [];
@@ -259,6 +261,14 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
             if (!viewer) return;
             viewer.scrollPageIntoView({ pageNumber: region.pageNumber });
             flashRegion(viewer, region);
+        },
+        returnToRegion: async (region) => {
+            const viewer = utilsRef.current?.getViewer();
+            if (!viewer) return null;
+            viewer.scrollPageIntoView({ pageNumber: region.pageNumber });
+            flashRegion(viewer, region);
+            await waitForTextLayer(viewer, region.pageNumber);
+            return createRegionAnchor(viewer.container, region);
         },
         scrollToHighlight: (id) => {
             const highlight = highlightsRef.current.find((item) => item.id === id);
