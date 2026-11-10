@@ -148,9 +148,6 @@ const SelectionTipContext = createContext<React.ReactNode>(null);
 const SelectionTipOutlet = () => <>{useContext(SelectionTipContext)}</>;
 const SELECTION_TIP = <SelectionTipOutlet />;
 
-// Translucent, since the text layer no longer multiplies onto the page.
-const TEXT_SELECTION_COLOR = "color-mix(in oklch, var(--primary) 30%, transparent)";
-
 const HighlightContainer = ({ onClick }: { onClick: (highlight: ViewportHighlight, anchor: Element) => void }) => {
     const { highlight, isScrolledTo } = useHighlightContainerContext();
     const highlightWithColor = highlight as ViewportHighlight & { color?: string; variant?: "explanation" };
@@ -418,7 +415,6 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
                                 highlights={highlights}
                                 onSelection={handleSelection}
                                 selectionTip={SELECTION_TIP}
-                                textSelectionColor={TEXT_SELECTION_COLOR}
                                 utilsRef={(utils) => {
                                     utilsRef.current = utils;
                                     setUtils(utils);
