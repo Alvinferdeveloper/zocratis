@@ -331,6 +331,29 @@
   background-color: var(--scrollbar-track) !important;
 }
 
+/* Notes and words on a page, drawn by HighlightLayer above the canvas. They never take the pointer, so the
+   text over them stays selectable; multiplied so the page's text shows through their color. */
+.highlight-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+}
+
+.highlight-part {
+  position: absolute;
+}
+
+.highlight-part--flash {
+  animation: highlight-flash 1.4s var(--ease-out);
+}
+
+/* Set by useHighlightPointer while the pointer is over a highlight: a click there opens it. */
+[data-over-highlight="true"] .textLayer,
+[data-over-highlight="true"] .textLayer * {
+  cursor: pointer;
+}
+
 /* A highlight the reader jumped to (from the notes panel): a vivid-ink outline that fades out. */
 .TextHighlight--scrolledTo .TextHighlight__part {
   animation: highlight-flash 1.4s var(--ease-out);
