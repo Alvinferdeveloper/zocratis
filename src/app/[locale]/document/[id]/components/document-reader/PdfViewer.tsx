@@ -4,7 +4,6 @@ import { createContext, useContext, useRef, useMemo, useCallback, useEffect, use
 import { useTranslations } from "next-intl";
 import { PdfLoader, PdfHighlighter, TextHighlight, useHighlightContainerContext, ViewportHighlight } from "react-pdf-highlighter-extended";
 import "react-pdf-highlighter-extended/dist/esm/style/PdfHighlighter.css";
-import "react-pdf-highlighter-extended/dist/esm/style/pdf_viewer.css";
 import { AnnotationRect, BoundingRect } from "@/app/types";
 import { usePdfPageOverlay } from "../../hooks/usePdfPageOverlay";
 import { PdfSkeleton } from "./PdfSkeleton";
@@ -148,6 +147,9 @@ const getClickedPart = (container: Element, x: number, y: number): Element => {
 const SelectionTipContext = createContext<React.ReactNode>(null);
 const SelectionTipOutlet = () => <>{useContext(SelectionTipContext)}</>;
 const SELECTION_TIP = <SelectionTipOutlet />;
+
+// Translucent, since the text layer no longer multiplies onto the page.
+const TEXT_SELECTION_COLOR = "color-mix(in oklch, var(--primary) 30%, transparent)";
 
 const HighlightContainer = ({ onClick }: { onClick: (highlight: ViewportHighlight, anchor: Element) => void }) => {
     const { highlight, isScrolledTo } = useHighlightContainerContext();
@@ -416,6 +418,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
                                 highlights={highlights}
                                 onSelection={handleSelection}
                                 selectionTip={SELECTION_TIP}
+                                textSelectionColor={TEXT_SELECTION_COLOR}
                                 utilsRef={(utils) => {
                                     utilsRef.current = utils;
                                     setUtils(utils);

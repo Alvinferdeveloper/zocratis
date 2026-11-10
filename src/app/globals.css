@@ -331,6 +331,22 @@
   background-color: var(--scrollbar-track) !important;
 }
 
+/* The library multiplies the whole text layer onto the page, repainting it on every drag: blend only the highlights. */
+.PdfHighlighter .textLayer {
+  /* No stacking context here, so the highlights' blend reaches the canvas. */
+  z-index: auto;
+  display: block;
+  mix-blend-mode: normal;
+}
+
+.PdfHighlighter .textLayer > .endOfContent {
+  mix-blend-mode: normal !important;
+}
+
+.PdfHighlighter__highlight-layer {
+  mix-blend-mode: multiply;
+}
+
 /* A highlight the reader jumped to (from the notes panel): a vivid-ink outline that fades out. */
 .TextHighlight--scrolledTo .TextHighlight__part {
   animation: highlight-flash 1.4s var(--ease-out);
@@ -528,12 +544,6 @@
 
 .hljs-params {
   color: var(--foreground);
-}
-
-.textLayer span {
-  padding: 1px 0.5px;
-  margin: -1px -0.5px;
-  /* compensates for the padding so as not to shift the visual layout */
 }
 
 /* Unlayered, so it beats Tailwind's transition utilities: it carries the state transitions too. */
