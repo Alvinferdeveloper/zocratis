@@ -151,7 +151,7 @@ Files and document embeddings are stored in Supabase (Storage + pgvector). AI ru
 - **Styling:** [Tailwind CSS 4](https://tailwindcss.com/) with an in-house design system on top of [Radix UI](https://www.radix-ui.com/) primitives
 - **Data:** [TanStack Query](https://tanstack.com/query), [Zod](https://zod.dev/)
 - **AI streaming:** [Vercel AI SDK](https://ai-sdk.dev/)
-- **PDF:** [pdf.js](https://mozilla.github.io/pdf.js/) via `react-pdf-highlighter-extended`
+- **PDF:** [pdf.js](https://mozilla.github.io/pdf.js/) (`pdfjs-dist`, legacy build) with our own viewer, selection and highlight layer
 - **i18n:** [next-intl](https://next-intl.dev/) (Spanish and English)
 - **Auth:** [Better Auth](https://www.better-auth.com/) (email, Google and GitHub)
 - **Payments:** [PayPal](https://developer.paypal.com/)

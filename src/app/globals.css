@@ -315,20 +315,9 @@
   user-select: text !important;
 }
 
-/* react-pdf-highlighter-extended ships a hardcoded dark background and scrollbar that ignore our theme */
-.PdfHighlighter {
+/* The reader's scrolling viewport (PdfViewer): its scrollbar sits on the reader's canvas. */
+.pdf-viewer-scroll {
   --scrollbar-track: var(--reader-canvas);
-  background-color: var(--reader-canvas) !important;
-}
-
-.PdfHighlighter::-webkit-scrollbar-thumb,
-.PdfHighlighter::-webkit-scrollbar-thumb:hover {
-  background-color: var(--scrollbar-thumb) !important;
-}
-
-.PdfHighlighter::-webkit-scrollbar-track,
-.PdfHighlighter::-webkit-scrollbar-track-piece {
-  background-color: var(--scrollbar-track) !important;
 }
 
 /* Notes and words on a page, drawn by HighlightLayer above the canvas. They never take the pointer, so the
@@ -344,6 +333,7 @@
   position: absolute;
 }
 
+/* A highlight the reader jumped to (from the notes panel): a vivid-ink outline that fades out. */
 .highlight-part--flash {
   animation: highlight-flash 1.4s var(--ease-out);
 }
@@ -352,11 +342,6 @@
 [data-over-highlight="true"] .textLayer,
 [data-over-highlight="true"] .textLayer * {
   cursor: pointer;
-}
-
-/* A highlight the reader jumped to (from the notes panel): a vivid-ink outline that fades out. */
-.TextHighlight--scrolledTo .TextHighlight__part {
-  animation: highlight-flash 1.4s var(--ease-out);
 }
 
 @keyframes highlight-flash {

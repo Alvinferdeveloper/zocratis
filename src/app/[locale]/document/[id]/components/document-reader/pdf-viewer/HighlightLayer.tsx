@@ -16,7 +16,7 @@ const NO_PARTS: HighlightPart[] = [];
 
 type PageLayers = Map<number, HTMLElement>;
 
-// A layer in every drawn page, right above its canvas and so under pdf.js's text layer.
+// A layer in every drawn page, placed right after its canvas.
 const collectLayers = (container: HTMLElement): PageLayers => {
     const layers: PageLayers = new Map();
     container.querySelectorAll<HTMLElement>(".page").forEach((page) => {

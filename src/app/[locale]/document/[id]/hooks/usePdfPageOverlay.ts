@@ -1,20 +1,29 @@
 import { useEffect, useCallback, useRef } from "react";
+import type { PdfViewerHandle } from "@/app/[locale]/document/[id]/hooks/useRegionOverlays";
 
 interface UsePdfPageOverlayProps {
+    viewer: PdfViewerHandle | null;
     examMode: boolean;
     selectedPages: number[];
     onPageSelect: ((page: number) => void) | undefined;
 }
 
+const forEachPage = (viewer: PdfViewerHandle, visit: (pageEl: HTMLElement, pageNumber: number) => void) => {
+    viewer.container.querySelectorAll<HTMLElement>(".page").forEach((pageEl) => {
+        const pageNumber = parseInt(pageEl.dataset.pageNumber || "0");
+        if (pageNumber) visit(pageEl, pageNumber);
+    });
+};
+
+// In exam mode, covers every page with a click target that selects it for the exam.
 export const usePdfPageOverlay = ({
+    viewer,
     examMode,
     selectedPages,
     onPageSelect,
 }: UsePdfPageOverlayProps) => {
-    const utilsRef = useRef<any>(null);
     const onPageSelectRef = useRef(onPageSelect);
     const selectedPagesRef = useRef(selectedPages);
-    const isInitialized = useRef(false);
 
     useEffect(() => {
         onPageSelectRef.current = onPageSelect;
@@ -53,67 +62,24 @@ export const usePdfPageOverlay = ({
         pageEl.appendChild(overlay);
     }, []);
 
-    // Also runs on every page render, so it must do nothing outside exam mode.
-    const applyOverlays = useCallback(() => {
-        if (!examMode || !utilsRef.current) return;
-        const viewer = utilsRef.current.getViewer();
-        if (!viewer?.container) return;
-
-        const pages = viewer.container.querySelectorAll(".page") as NodeListOf<HTMLElement>;
-        pages.forEach((pageEl) => {
-            const pageNumber = parseInt(pageEl.dataset.pageNumber || "0");
-            if (!pageNumber) return;
-
-            createPageOverlay(pageEl, pageNumber);
-            updatePageOverlay(pageEl, pageNumber);
-        });
-
-        isInitialized.current = true;
-    }, [examMode, createPageOverlay, updatePageOverlay]);
-
-    const cleanupOverlays = useCallback(() => {
-        if (!utilsRef.current) return;
-        const viewer = utilsRef.current.getViewer();
-        if (!viewer?.container) return;
-
-        const overlays = viewer.container.querySelectorAll(".exam-page-overlay");
-        overlays.forEach((o: any) => o.remove());
-    }, []);
-
+    // pdf.js empties a page when it redraws it, so the overlays are put back on every page render.
     useEffect(() => {
-        if (utilsRef.current) {
-            const viewer = utilsRef.current.getViewer();
-            if (viewer?.eventBus) {
-                const handlePageRendered = () => applyOverlays();
-                viewer.eventBus.on("pagerendered", handlePageRendered);
-                return () => viewer.eventBus.off("pagerendered", handlePageRendered);
-            }
-        }
-    }, [applyOverlays]);
-
-    useEffect(() => {
-        if (examMode) {
-            applyOverlays();
-        } else {
-            cleanupOverlays();
-        }
-    }, [examMode, applyOverlays, cleanupOverlays]);
-
-    useEffect(() => {
-        if (examMode && isInitialized.current) {
-            if (!utilsRef.current) return;
-            const viewer = utilsRef.current.getViewer();
-            if (!viewer?.container) return;
-
-            const pages = viewer.container.querySelectorAll(".page") as NodeListOf<HTMLElement>;
-            pages.forEach((pageEl) => {
-                const pageNumber = parseInt(pageEl.dataset.pageNumber || "0");
-                if (pageNumber) updatePageOverlay(pageEl, pageNumber);
+        if (!viewer || !examMode) return;
+        const applyOverlays = () =>
+            forEachPage(viewer, (pageEl, pageNumber) => {
+                createPageOverlay(pageEl, pageNumber);
+                updatePageOverlay(pageEl, pageNumber);
             });
-        }
-    }, [selectedPages, examMode, updatePageOverlay]);
 
-    return {
-        setUtils: (utils: any) => { utilsRef.current = utils; },
-    };
+        applyOverlays();
+        viewer.eventBus.on("pagerendered", applyOverlays);
+        return () => {
+            viewer.eventBus.off("pagerendered", applyOverlays);
+            viewer.container.querySelectorAll(".exam-page-overlay").forEach((overlay) => overlay.remove());
+        };
+    }, [viewer, examMode, createPageOverlay, updatePageOverlay]);
+
+    useEffect(() => {
+        if (viewer && examMode) forEachPage(viewer, updatePageOverlay);
+    }, [viewer, selectedPages, examMode, updatePageOverlay]);
 };

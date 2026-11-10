@@ -17,9 +17,7 @@ const render = async (pdf: PdfDocument, pageNumber: number): Promise<string> => 
   const canvas = document.createElement("canvas");
   canvas.width = Math.ceil(viewport.width);
   canvas.height = Math.ceil(viewport.height);
-  const context = canvas.getContext("2d");
-  if (!context) throw new Error("Canvas 2D context unavailable");
-  await page.render({ canvasContext: context, viewport }).promise;
+  await page.render({ canvas, viewport }).promise;
 
   // A data URL (not an object URL) is freed with the cache, with nothing to revoke.
   return canvas.toDataURL("image/jpeg", 0.85);

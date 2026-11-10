@@ -36,7 +36,8 @@ import { Header } from "@/app/[locale]/document/[id]/components/document-reader/
 import { PdfControls } from "@/app/[locale]/document/[id]/components/document-reader/PdfControls";
 import { ResumeNotice } from "@/app/[locale]/document/[id]/components/document-reader/ResumeNotice";
 import { FormulaReturnNotice } from "@/app/[locale]/document/[id]/components/document-reader/FormulaReturnNotice";
-import { PdfViewer, PdfHighlightItem, type PdfNavigation } from "@/app/[locale]/document/[id]/components/document-reader/PdfViewer";
+import { PdfViewer, type PdfNavigation } from "@/app/[locale]/document/[id]/components/document-reader/PdfViewer";
+import type { PdfHighlightItem } from "@/app/[locale]/document/[id]/lib/page-highlights";
 import { ReaderSidebar, SIDEBAR_TABS, type SidebarTab } from "@/app/[locale]/document/[id]/components/document-reader/sidebar/ReaderSidebar";
 import type { SidebarHighlight } from "@/app/[locale]/document/[id]/lib/sidebar-highlights";
 import { useStoredChoice } from "@/hooks/useStoredChoice";

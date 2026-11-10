@@ -34,11 +34,9 @@ const renderRegion = async (page: PdfPage, region: PageRegion, targetSize: numbe
   const canvas = document.createElement("canvas");
   canvas.width = Math.max(1, Math.round(viewport.width * region.width));
   canvas.height = Math.max(1, Math.round(viewport.height * region.height));
-  const context = canvas.getContext("2d");
-  if (!context) throw new Error("Canvas 2D context unavailable");
 
   await page.render({
-    canvasContext: context,
+    canvas,
     viewport,
     // Shifts the page so the region lands at the canvas origin; the rest is clipped.
     transform: [1, 0, 0, 1, -region.left * viewport.width, -region.top * viewport.height],

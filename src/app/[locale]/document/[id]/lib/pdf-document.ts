@@ -1,4 +1,3 @@
-import type { PdfLoaderProps } from "react-pdf-highlighter-extended";
+import type { PDFDocumentProxy } from "pdfjs-dist";
 
-// pdf.js's PDFDocumentProxy, taken from the viewer: pdfjs-dist comes with it and isn't importable directly.
-export type PdfDocument = Parameters<PdfLoaderProps["children"]>[0];
+export type PdfDocument = PDFDocumentProxy;
