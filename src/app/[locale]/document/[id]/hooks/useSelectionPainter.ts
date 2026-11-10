@@ -3,18 +3,20 @@ import type { PdfViewerHandle } from "@/app/[locale]/document/[id]/hooks/useRegi
 import { type Box, readSelectionBoxes } from "@/app/[locale]/document/[id]/lib/selection-geometry";
 
 const LAYER_CLASS = "selection-layer";
+const SVG_NAMESPACE = "http://www.w3.org/2000/svg";
 
-const toPercent = (value: number, total: number) => `${(value / total) * 100}%`;
+// One path for the whole page: where line boxes overlap, the color is painted once instead of twice.
+const toShape = (boxes: Box[]): string =>
+  boxes.map((box) => `M${box.left} ${box.top}H${box.right}V${box.bottom}H${box.left}Z`).join("");
 
-// Percentages of the page, so the paint follows it while the zoom changes.
-const createPart = (box: Box, page: HTMLElement): HTMLElement => {
-  const part = document.createElement("div");
-  part.className = "selection-part";
-  part.style.left = toPercent(box.left, page.clientWidth);
-  part.style.top = toPercent(box.top, page.clientHeight);
-  part.style.width = toPercent(box.right - box.left, page.clientWidth);
-  part.style.height = toPercent(box.bottom - box.top, page.clientHeight);
-  return part;
+const createLayer = (page: HTMLElement): SVGSVGElement => {
+  const layer = document.createElementNS(SVG_NAMESPACE, "svg");
+  layer.setAttribute("class", LAYER_CLASS);
+  layer.setAttribute("preserveAspectRatio", "none");
+  layer.setAttribute("aria-hidden", "true");
+  layer.appendChild(document.createElementNS(SVG_NAMESPACE, "path"));
+  page.appendChild(layer);
+  return layer;
 };
 
 // Paints the text selection itself, one box per line, as it changes. The browser's own paint (a box per
@@ -29,17 +31,14 @@ export const useSelectionPainter = (viewer: PdfViewerHandle | null) => {
       const selection = document.getSelection();
       const pages = selection ? readSelectionBoxes(selection, container) : new Map<HTMLElement, Box[]>();
 
-      container.querySelectorAll<HTMLElement>(`.${LAYER_CLASS}`).forEach((layer) => {
-        if (!layer.parentElement || !pages.has(layer.parentElement)) layer.remove();
+      container.querySelectorAll(`.${LAYER_CLASS}`).forEach((layer) => {
+        if (!(layer.parentElement instanceof HTMLElement) || !pages.has(layer.parentElement)) layer.remove();
       });
       pages.forEach((boxes, page) => {
-        let layer = page.querySelector<HTMLElement>(`:scope > .${LAYER_CLASS}`);
-        if (!layer) {
-          layer = document.createElement("div");
-          layer.className = LAYER_CLASS;
-          page.appendChild(layer);
-        }
-        layer.replaceChildren(...boxes.map((box) => createPart(box, page)));
+        const layer = page.querySelector<SVGSVGElement>(`:scope > .${LAYER_CLASS}`) ?? createLayer(page);
+        // The boxes are in pixels of the page as it is now; stretched over it, they follow the zoom.
+        layer.setAttribute("viewBox", `0 0 ${page.clientWidth} ${page.clientHeight}`);
+        layer.firstElementChild?.setAttribute("d", toShape(boxes));
       });
     };
     const schedule = () => {

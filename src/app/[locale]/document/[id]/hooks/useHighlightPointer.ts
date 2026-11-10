@@ -1,39 +1,51 @@
 import { useEffect, useRef } from "react";
-import { findHighlightPartAt } from "@/app/[locale]/document/[id]/lib/page-highlights";
+import { findHighlightAt, type PageHighlight } from "@/app/[locale]/document/[id]/lib/page-highlights";
+
+// Set on each highlight's element by HighlightLayer, so a clicked highlight can be anchored to.
+export const HIGHLIGHT_ID_ATTRIBUTE = "data-highlight-id";
 
 interface UseHighlightPointerOptions {
   container: HTMLElement | null;
+  highlightsByPage: Map<number, PageHighlight[]>;
   // Off while dragging crops regions, so a short drag doesn't open the note under it.
   enabled: boolean;
   onClick: (id: string, anchor: Element) => void;
 }
 
-const findPartUnder = (event: MouseEvent): HTMLElement | null => {
-  const page = (event.target as Element).closest(".page");
-  return page ? findHighlightPartAt(page, event.clientX, event.clientY) : null;
-};
-
 // Highlights sit under the text and never take the pointer: a click on one (not a drag, which selects text)
 // is found by position, and the container is flagged while the pointer is over one (globals.css sets the cursor).
-export const useHighlightPointer = ({ container, enabled, onClick }: UseHighlightPointerOptions) => {
-  const onClickRef = useRef(onClick);
+export const useHighlightPointer = ({ container, highlightsByPage, enabled, onClick }: UseHighlightPointerOptions) => {
+  const latest = useRef({ highlightsByPage, onClick });
   useEffect(() => {
-    onClickRef.current = onClick;
-  }, [onClick]);
+    latest.current = { highlightsByPage, onClick };
+  });
 
   useEffect(() => {
     if (!container || !enabled) return;
     let frame = 0;
 
+    const findUnder = (event: MouseEvent): { id: string; page: HTMLElement } | null => {
+      const page = (event.target as Element).closest<HTMLElement>(".page");
+      if (!page) return null;
+      const bounds = page.getBoundingClientRect();
+      const highlight = findHighlightAt(
+        latest.current.highlightsByPage.get(Number(page.dataset.pageNumber)) ?? [],
+        (event.clientX - bounds.left - page.clientLeft) / page.clientWidth,
+        (event.clientY - bounds.top - page.clientTop) / page.clientHeight
+      );
+      return highlight ? { id: highlight.id, page } : null;
+    };
+
     const handleClick = (event: MouseEvent) => {
       if (event.altKey || !document.getSelection()?.isCollapsed) return;
-      const part = findPartUnder(event);
-      if (part?.dataset.highlightId) onClickRef.current(part.dataset.highlightId, part);
+      const hit = findUnder(event);
+      const anchor = hit?.page.querySelector(`[${HIGHLIGHT_ID_ATTRIBUTE}="${CSS.escape(hit.id)}"]`);
+      if (hit && anchor) latest.current.onClick(hit.id, anchor);
     };
     const handleMove = (event: MouseEvent) => {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
-        container.dataset.overHighlight = String(Boolean(findPartUnder(event)));
+        container.dataset.overHighlight = String(Boolean(findUnder(event)));
       });
     };
 

@@ -329,13 +329,30 @@
   mix-blend-mode: multiply;
 }
 
-.highlight-part {
-  position: absolute;
+/* One shape per highlight, in fractions of the page and stretched over it. */
+.highlight-shapes {
+  width: 100%;
+  height: 100%;
+}
+
+/* An explained passage's underline; its width stays the same at any zoom. */
+.highlight-underline {
+  fill: none;
+  stroke: var(--primary);
+  stroke-width: 2px;
+  vector-effect: non-scaling-stroke;
 }
 
 /* A highlight the reader jumped to (from the notes panel): a vivid-ink outline that fades out. */
-.highlight-part--flash {
-  animation: highlight-flash 1.4s var(--ease-out);
+.highlight-shape--flash path:first-child {
+  stroke-width: 2px;
+  vector-effect: non-scaling-stroke;
+  animation: highlight-outline-flash 1.4s var(--ease-out);
+}
+
+@keyframes highlight-outline-flash {
+  0%, 35% { stroke: var(--selection); }
+  100% { stroke: transparent; }
 }
 
 /* The text selection is painted by useSelectionPainter, one box per line, instead of the browser's box per span. */
@@ -346,14 +363,15 @@
 .selection-layer {
   position: absolute;
   inset: 0;
+  width: 100%;
+  height: 100%;
   pointer-events: none;
   mix-blend-mode: multiply;
 }
 
 /* Opaque and multiplied onto the white page, so the selected text stays crisp. */
-.selection-part {
-  position: absolute;
-  background-color: color-mix(in oklch, var(--info) 35%, white);
+.selection-layer path {
+  fill: color-mix(in oklch, var(--info) 35%, white);
 }
 
 /* Set by useHighlightPointer while the pointer is over a highlight: a click there opens it. */

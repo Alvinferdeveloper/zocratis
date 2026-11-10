@@ -1,18 +1,13 @@
 "use client";
 
-import { memo, useEffect, useMemo, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import type { PDFViewer } from "pdfjs-dist/legacy/web/pdf_viewer.mjs";
-import { cn } from "@/lib/utils";
-import {
-    groupPartsByPage,
-    HIGHLIGHT_PART_CLASS,
-    type HighlightPart,
-    type PdfHighlightItem,
-} from "@/app/[locale]/document/[id]/lib/page-highlights";
+import { HIGHLIGHT_ID_ATTRIBUTE } from "@/app/[locale]/document/[id]/hooks/useHighlightPointer";
+import type { FractionRect, PageHighlight } from "@/app/[locale]/document/[id]/lib/page-highlights";
 
 const LAYER_CLASS = "highlight-layer";
-const NO_PARTS: HighlightPart[] = [];
+const NO_HIGHLIGHTS: PageHighlight[] = [];
 
 type PageLayers = Map<number, HTMLElement>;
 
@@ -36,41 +31,45 @@ const collectLayers = (container: HTMLElement): PageLayers => {
 const isSameLayers = (a: PageLayers, b: PageLayers): boolean =>
     a.size === b.size && Array.from(a).every(([pageNumber, layer]) => b.get(pageNumber) === layer);
 
-const toPercent = (fraction: number) => `${fraction * 100}%`;
+// All of a highlight's boxes as one path: where they overlap, its color is painted once instead of twice.
+const toShape = (rects: FractionRect[]): string =>
+    rects.map((rect) => `M${rect.left} ${rect.top}H${rect.right}V${rect.bottom}H${rect.left}Z`).join("");
 
-const getPartStyle = (part: HighlightPart): React.CSSProperties => ({
-    left: toPercent(part.left),
-    top: toPercent(part.top),
-    width: toPercent(part.width),
-    height: toPercent(part.height),
-    ...(part.variant === "explanation"
-        ? { background: "color-mix(in oklch, var(--primary) 26%, transparent)", borderBottom: "2px solid var(--primary)" }
-        : { background: part.color }),
-});
+const toUnderline = (rects: FractionRect[]): string => rects.map((rect) => `M${rect.left} ${rect.bottom}H${rect.right}`).join("");
 
-const PageHighlights = memo(({ parts, flashedId }: { parts: HighlightPart[]; flashedId: string | null }) =>
-    parts.map((part, index) => (
-        <div
-            key={index}
-            data-highlight-id={part.id}
-            className={cn(HIGHLIGHT_PART_CLASS, part.id === flashedId && "highlight-part--flash")}
-            style={getPartStyle(part)}
-        />
-    ))
-);
+const PageHighlights = memo(({ highlights, flashedId }: { highlights: PageHighlight[]; flashedId: string | null }) => (
+    // In fractions of the page, stretched over it, so the shapes follow the zoom without redrawing.
+    <svg className="highlight-shapes" viewBox="0 0 1 1" preserveAspectRatio="none" aria-hidden="true">
+        {highlights.map((highlight) => (
+            <g
+                key={highlight.id}
+                {...{ [HIGHLIGHT_ID_ATTRIBUTE]: highlight.id }}
+                className={highlight.id === flashedId ? "highlight-shape--flash" : undefined}
+            >
+                {highlight.variant === "explanation" ? (
+                    <>
+                        <path d={toShape(highlight.rects)} style={{ fill: "color-mix(in oklch, var(--primary) 26%, transparent)" }} />
+                        <path d={toUnderline(highlight.rects)} className="highlight-underline" />
+                    </>
+                ) : (
+                    <path d={toShape(highlight.rects)} style={{ fill: highlight.color }} />
+                )}
+            </g>
+        ))}
+    </svg>
+));
 PageHighlights.displayName = "PageHighlights";
 
 interface HighlightLayerProps {
     viewer: PDFViewer;
-    highlights: PdfHighlightItem[];
+    highlightsByPage: Map<number, PageHighlight[]>;
     // The highlight the reader just jumped to, outlined briefly.
     flashedId: string | null;
 }
 
 // Draws the highlights of every page pdf.js has on screen.
-export const HighlightLayer = ({ viewer, highlights, flashedId }: HighlightLayerProps) => {
+export const HighlightLayer = ({ viewer, highlightsByPage, flashedId }: HighlightLayerProps) => {
     const [layers, setLayers] = useState<PageLayers>(() => new Map());
-    const partsByPage = useMemo(() => groupPartsByPage(highlights), [highlights]);
 
     // pdf.js empties a page when it redraws it (zoom, scrolling far away), which takes the layer with it.
     useEffect(() => {
@@ -89,6 +88,6 @@ export const HighlightLayer = ({ viewer, highlights, flashedId }: HighlightLayer
     }, [viewer]);
 
     return Array.from(layers, ([pageNumber, layer]) =>
-        createPortal(<PageHighlights parts={partsByPage.get(pageNumber) ?? NO_PARTS} flashedId={flashedId} />, layer, pageNumber)
+        createPortal(<PageHighlights highlights={highlightsByPage.get(pageNumber) ?? NO_HIGHLIGHTS} flashedId={flashedId} />, layer, pageNumber)
     );
 };

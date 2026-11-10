@@ -82,15 +82,63 @@ const mergeByLine = (boxes: Box[]): Box[] => {
   });
 };
 
-// Stretches each line down to the next one in its column, so a paragraph reads as one block without stripes.
-const closeLineGaps = (lines: Box[]): Box[] => {
-  const sorted = [...lines].sort((a, b) => a.top - b.top);
-  sorted.forEach((line, index) => {
-    const next = sorted.slice(index + 1).find((below) => below.top >= line.top && below.left < line.right && below.right > line.left);
-    // A gap taller than the line is a paragraph break, which stays open.
-    if (next && next.top > line.bottom && next.top - line.bottom < getHeight(line)) line.bottom = next.top;
+// Room around the text, in line heights: a span's box is as tight as its font size, which clips
+// descenders, accents and the last letter's overhang.
+const PAD_X_RATIO = 0.2;
+const PAD_Y_RATIO = 0.15;
+// Line ends this close to their paragraph's edge (in line heights) snap to it; a short last line stays short.
+const SNAP_RATIO = 3;
+
+// The line under this one in its column, when it's close enough to belong to the same paragraph.
+const findNextLine = (line: Box, lines: Box[]): Box | undefined =>
+  lines.find(
+    (below) => below.top > line.top && below.left < line.right && below.right > line.left && below.top - line.bottom < getHeight(line)
+  );
+
+// Evens out the ragged edges of a paragraph: lines that are fully selected reach the edges of their neighbours.
+const snapToNeighbours = (lines: Box[]): void => {
+  const nextOf = new Map(lines.map((line): [Box, Box | undefined] => [line, findNextLine(line, lines)]));
+  const previousOf = new Map<Box, Box>();
+  nextOf.forEach((next, line) => next && previousOf.set(next, line));
+
+  const snapped = lines.map((line) => {
+    const next = nextOf.get(line);
+    const previous = previousOf.get(line);
+    const reach = getHeight(line) * SNAP_RATIO;
+    // A line with one above it is selected from its start, and one with a line below it up to its end.
+    const left = previous ? Math.min(previous.left, next?.left ?? Infinity) : line.left;
+    const right = next ? Math.max(next.right, previous?.right ?? -Infinity) : line.right;
+    return {
+      left: left < line.left && line.left - left <= reach ? left : line.left,
+      right: right > line.right && right - line.right <= reach ? right : line.right,
+    };
   });
-  return sorted;
+  lines.forEach((line, index) => Object.assign(line, snapped[index]));
+};
+
+// Pads every line and stretches it down to the next one, so a paragraph reads as one block without stripes.
+const padAndCloseGaps = (lines: Box[]): Box[] => {
+  const padded = lines.map((line) => {
+    const height = getHeight(line);
+    return {
+      left: line.left - height * PAD_X_RATIO,
+      right: line.right + height * PAD_X_RATIO,
+      top: line.top - height * PAD_Y_RATIO,
+      bottom: line.bottom + height * PAD_Y_RATIO,
+    };
+  });
+  padded.forEach((line) => {
+    const next = findNextLine(line, padded);
+    if (next && next.top > line.bottom) line.bottom = next.top;
+  });
+  return padded;
+};
+
+// Boxes may overlap after this; they are drawn as one shape, so overlaps don't show.
+const shapeLines = (boxes: Box[]): Box[] => {
+  const lines = mergeByLine(boxes).sort((a, b) => a.top - b.top);
+  snapToNeighbours(lines);
+  return padAndCloseGaps(lines);
 };
 
 // The selection's boxes, one per line, on each page it touches. Empty when nothing in the viewer is selected.
@@ -100,7 +148,7 @@ export const readSelectionBoxes = (selection: Selection, container: HTMLElement)
   if (!container.contains(range.commonAncestorContainer)) return new Map();
 
   const pages = collectBoxes(range);
-  pages.forEach((boxes, page) => pages.set(page, closeLineGaps(mergeByLine(boxes))));
+  pages.forEach((boxes, page) => pages.set(page, shapeLines(boxes)));
   return pages;
 };
 

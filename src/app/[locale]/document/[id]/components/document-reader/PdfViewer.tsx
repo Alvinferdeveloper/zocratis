@@ -11,7 +11,7 @@ import { SelectionTip } from "./pdf-viewer/SelectionTip";
 import type { PdfDocument } from "@/app/[locale]/document/[id]/lib/pdf-document";
 import type { PageRegion } from "@/app/[locale]/document/[id]/lib/region-image";
 import { createRegionAnchor, type DocumentRegion, findPageElement, flashRegion, toPageRegion } from "@/app/[locale]/document/[id]/lib/page-regions";
-import { getHighlightSpan, type PdfHighlightItem } from "@/app/[locale]/document/[id]/lib/page-highlights";
+import { getHighlightSpan, groupHighlightsByPage, type PdfHighlightItem } from "@/app/[locale]/document/[id]/lib/page-highlights";
 import { useRegionOverlays } from "@/app/[locale]/document/[id]/hooks/useRegionOverlays";
 import { useHighlightPointer } from "@/app/[locale]/document/[id]/hooks/useHighlightPointer";
 import { usePdfDocument } from "@/app/[locale]/document/[id]/hooks/usePdfDocument";
@@ -189,7 +189,8 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
         onCrop: (region) => onRegionSelection?.(region, container ? createRegionAnchor(container, region) : null),
     });
 
-    useHighlightPointer({ container, enabled: !regionMode, onClick: onHighlightClick });
+    const highlightsByPage = useMemo(() => groupHighlightsByPage(highlights), [highlights]);
+    useHighlightPointer({ container, highlightsByPage, enabled: !regionMode, onClick: onHighlightClick });
 
     const highlightsRef = useRef(highlights);
     useEffect(() => {
@@ -266,7 +267,7 @@ export const PdfViewer: React.FC<PdfViewerProps> = ({
                     </SelectionTip>
                 )}
             </div>
-            {viewer && <HighlightLayer viewer={viewer} highlights={highlights} flashedId={flashedId} />}
+            {viewer && <HighlightLayer viewer={viewer} highlightsByPage={highlightsByPage} flashedId={flashedId} />}
         </div>
     );
 };
