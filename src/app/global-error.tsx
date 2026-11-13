@@ -1,6 +1,8 @@
 "use client";
 
 import "./globals.css";
+// The raw path is what carries the locale here: this renders outside the next-intl provider.
+// eslint-disable-next-line no-restricted-imports
 import { usePathname } from "next/navigation";
 import { NextIntlClientProvider } from "next-intl";
 import { ThemeProvider } from "@/components/theme-provider";
